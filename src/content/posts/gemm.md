@@ -11,15 +11,15 @@ visibility: public
 
 ![CPU 与 GPU 异构计算以及 CUDA Grid、Block、Thread 的关系](../../assets/posts/gemm/cuda-heterogeneous-computing.webp)
 
-+ Grid : 整个 GPU 执行的一次任务被称为一个 Grid。
++ `Grid` : 整个 GPU 执行的一次任务被称为一个 Grid。
 
-+ Block : 一个 Grid 被划分为多个 Block。同一个 Block 会被分配到同一个 SM (流式多处理器) 上执行。
++ `Block` : 一个 Grid 被划分为多个 Block。同一个 Block 会被分配到同一个 SM (流式多处理器) 上执行。
 
-+ Thread : Block 内部又包含了多个 Thread。
++ `Thread` : Block 内部又包含了多个 Thread。
 
-+ Global Memory : 在最底下。它是 GPU上容量最大、但速度最慢的内存; 所有 Block 里的所有 Thread 都能访问它。CPU 拷过来的数据第一站就存在这里。
++ `Global Memory` : 在最底下。它是 GPU上容量最大、但速度最慢的内存; 所有 Block 里的所有 Thread 都能访问它。CPU 拷过来的数据第一站就存在这里。
 
-+ Shared Memory : 在 Block 内部。它是芯片上的缓存，容量很小，但速度极快（接近寄存器）。只有同一个 Block 内部的 Thread 才能访问这块内存。
++ `Shared Memory` : 在 Block 内部。它是芯片上的缓存，容量很小，但速度极快（接近寄存器）。只有同一个 Block 内部的 Thread 才能访问这块内存。
 
 2. GPU 内存层次结构
 
