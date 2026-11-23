@@ -10,6 +10,7 @@ const pageSize = 6;
 const search = document.querySelector("#article-search");
 const sort = document.querySelector("#article-sort");
 const filters = document.querySelector("#category-filters");
+const filterButtons = filters.querySelectorAll("button");
 const links = document.querySelectorAll("[data-nav-category]");
 const grid = document.querySelector("#article-grid");
 const count = document.querySelector("#article-count");
@@ -150,7 +151,7 @@ function matchingPosts() {
 function render() {
   search.value = state.query;
   sort.value = state.sort;
-  for (const button of filters.querySelectorAll("button")) {
+  for (const button of filterButtons) {
     button.setAttribute("aria-pressed", String(button.dataset.category === state.category));
   }
   for (const link of links) {
@@ -183,6 +184,11 @@ try {
   const response = await fetch(new URL("../posts/index.json", import.meta.url));
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   posts = await response.json();
+  for (const button of filterButtons) {
+    const category = button.dataset.category;
+    const total = category === "all" ? posts.length : posts.filter((post) => post.category === category).length;
+    button.querySelector(".category-count").textContent = total;
+  }
   render();
 
   search.addEventListener("input", () => updateState({ query: search.value }, { replace: true }));

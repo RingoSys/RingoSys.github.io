@@ -1,6 +1,6 @@
-# Ringo 的个人博客
+# RingoSys 的个人博客
 
-首页以独立卡片收录技术心得、学习笔记、学术分享和生活随笔。文章用 Markdown 编写，每篇都有可单独分享的链接。仓库初始包含 6 篇公开示例和 2 篇密码保护示例。
+首页侧栏提供个人简介和分类入口，文章按独立卡片纵向排列。文章用 Markdown 编写，每篇都有可单独分享的链接。仓库初始包含 6 篇公开示例和 2 篇密码保护示例。
 
 ## 本地预览
 
@@ -82,6 +82,6 @@ readTime: 3
 
 ## 封面素材
 
-首页封面由内置 imagegen 生成，保存于 `src/site/assets/mountain-journal.webp`。生成提示词如下。
+首页个人卡片的封面由内置 imagegen 生成，保存于 `src/site/assets/mountain-journal.webp`。生成提示词如下。
 
 > Photorealistic editorial landscape photograph for the masthead of a Chinese independent personal blog. Wide horizontal landscape, layered evergreen mountain ridges and deep forest in the foreground, a limpid winding teal mountain lake in the valley, soft bands of mist between ridges, cloudy pale warm early morning light above distant mountains. Natural fine film grain and realistic irregular pine trees. Restrained palette of fir green, sage, blue-gray and pale sandstone light. Distinct dark forest silhouettes in the foreground add depth. The right half holds the most distinct mountains, water and opening in the sky, with continuity toward dark forest at left. Calm, timeless, sophisticated outdoor magazine photograph, no artificial saturation. No people, structures, logos, text, borders, or watermarks.
