@@ -1,33 +1,33 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="RingoSys 的个人博客，分享技术心得、学习笔记、算法竞赛、学术思考和生活随笔。">
+  <meta name="description" content="Notes on technology, learning, competitive programming, research, and life by RingoSys.">
   <meta name="theme-color" content="#f8f7f4">
-  <title>RingoSys 的个人博客</title>
+  <title>RingoSys Blog</title>
   <link rel="icon" href="./assets/mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./css/style.css?v={{SITE_CSS_VERSION}}">
   <script src="./js/site.js?v={{SITE_JS_VERSION}}" type="module"></script>
 </head>
 <body>
-  <a class="skip-link" href="#articles">跳到文章</a>
+  <a class="skip-link" href="#articles">Skip to posts</a>
   <header class="site-header">
     <div class="container header-inner">
-      <a href="./" class="site-brand" aria-label="RingoSys 的个人博客首页">
+      <a href="./" class="site-brand" aria-label="RingoSys Blog home">
         <span class="brand-mark" aria-hidden="true">R</span>
         <span class="brand-name">RingoSys</span>
       </a>
-      <nav class="site-nav" aria-label="主导航">
-        <a href="./" data-nav-category="all" aria-current="page">首页</a>
-        <a href="?category=tech#articles" data-nav-category="tech">技术</a>
-        <a href="?category=learning#articles" data-nav-category="learning">学习</a>
-        <a href="?category=algorithm#articles" data-nav-category="algorithm">算法竞赛</a>
-        <a href="?category=research#articles" data-nav-category="research">学术</a>
-        <a href="?category=life#articles" data-nav-category="life">生活</a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="./" data-nav-category="all" aria-current="page">Home</a>
+        <a href="?category=tech#articles" data-nav-category="tech">Tech</a>
+        <a href="?category=learning#articles" data-nav-category="learning">Learning</a>
+        <a href="?category=algorithm#articles" data-nav-category="algorithm">Algorithms</a>
+        <a href="?category=research#articles" data-nav-category="research">Research</a>
+        <a href="?category=life#articles" data-nav-category="life">Life</a>
       </nav>
       <div class="header-tools">
-        <a class="github-link" href="https://github.com/RingoSys" aria-label="RingoSys 的 GitHub 主页">
+        <a class="github-link" href="https://github.com/RingoSys" aria-label="RingoSys on GitHub">
           <svg aria-hidden="true"><use href="./assets/icons.svg#github"></use></svg>
           <span>GitHub</span>
         </a>
@@ -36,27 +36,27 @@
   </header>
 
   <main class="container main-content home-layout">
-    <aside class="home-sidebar" aria-label="博客信息和分类">
+    <aside class="home-sidebar" aria-label="Blog information and categories">
       <section class="profile-card" aria-labelledby="profile-title">
         <img class="profile-cover" src="./assets/mountain-journal.webp" alt="" width="1774" height="887">
         <div class="profile-content">
           <span class="profile-mark" aria-hidden="true">R</span>
           <div>
             <h1 id="profile-title">RingoSys</h1>
-            <p>没有结果也能尽兴</p>
+            <p lang="zh-CN">没有结果也能尽兴</p>
           </div>
         </div>
       </section>
 
       <section class="category-card" aria-labelledby="categories-title">
-        <h2 id="categories-title">文章分类</h2>
+        <h2 id="categories-title">Categories</h2>
         <div id="category-filters" class="category-filters" role="group" aria-labelledby="categories-title">
-          <button type="button" data-category="all" aria-pressed="true">全部文章<span class="category-count" aria-hidden="true"></span></button>
-          <button type="button" data-category="tech" aria-pressed="false">技术心得<span class="category-count" aria-hidden="true"></span></button>
-          <button type="button" data-category="learning" aria-pressed="false">学习笔记<span class="category-count" aria-hidden="true"></span></button>
-          <button type="button" data-category="algorithm" aria-pressed="false">算法竞赛<span class="category-count" aria-hidden="true"></span></button>
-          <button type="button" data-category="research" aria-pressed="false">学术分享<span class="category-count" aria-hidden="true"></span></button>
-          <button type="button" data-category="life" aria-pressed="false">生活随笔<span class="category-count" aria-hidden="true"></span></button>
+          <button type="button" data-category="all" aria-pressed="true">All posts<span class="category-count" aria-hidden="true"></span></button>
+          <button type="button" data-category="tech" aria-pressed="false">Tech<span class="category-count" aria-hidden="true"></span></button>
+          <button type="button" data-category="learning" aria-pressed="false">Learning<span class="category-count" aria-hidden="true"></span></button>
+          <button type="button" data-category="algorithm" aria-pressed="false">Algorithms<span class="category-count" aria-hidden="true"></span></button>
+          <button type="button" data-category="research" aria-pressed="false">Research<span class="category-count" aria-hidden="true"></span></button>
+          <button type="button" data-category="life" aria-pressed="false">Life<span class="category-count" aria-hidden="true"></span></button>
         </div>
       </section>
     </aside>
@@ -64,37 +64,37 @@
     <section id="articles" class="archive" aria-labelledby="archive-title">
       <div class="archive-heading">
         <div>
-          <h2 id="archive-title">文章档案</h2>
+          <h2 id="archive-title">Posts</h2>
           <p id="article-count" class="article-count" aria-live="polite"></p>
         </div>
         <div class="archive-controls">
           <label class="search-box">
             <svg aria-hidden="true"><use href="./assets/icons.svg#search"></use></svg>
-            <span class="visually-hidden">搜索文章</span>
-            <input id="article-search" type="search" placeholder="搜索标题、摘要或标签" autocomplete="off">
+            <span class="visually-hidden">Search titles, summaries, or tags</span>
+            <input id="article-search" type="search" placeholder="Search posts" autocomplete="off">
           </label>
           <label class="sort-box">
             <svg class="sort-icon" aria-hidden="true"><use href="./assets/icons.svg#sort"></use></svg>
-            <span class="visually-hidden">文章排序</span>
+            <span class="visually-hidden">Sort posts</span>
             <select id="article-sort">
-              <option value="newest">最新发布</option>
-              <option value="oldest">最早发布</option>
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
             </select>
             <svg class="sort-chevron" aria-hidden="true"><use href="./assets/icons.svg#chevron"></use></svg>
           </label>
         </div>
       </div>
-      <p id="archive-message" class="archive-message" role="status">正在加载文章…</p>
-      <noscript><p class="archive-message">请启用 JavaScript 查看文章目录。</p></noscript>
+      <p id="archive-message" class="archive-message" role="status">Loading posts…</p>
+      <noscript><p class="archive-message">Enable JavaScript to view the post list.</p></noscript>
       <div id="article-grid" class="article-grid"></div>
-      <nav id="pagination" class="pagination" aria-label="文章分页" hidden></nav>
+      <nav id="pagination" class="pagination" aria-label="Post pages" hidden></nav>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <a href="./" class="footer-brand">RingoSys 的个人博客</a>
-      <span>技术 · 学习 · 算法竞赛 · 学术 · 生活</span>
+      <a href="./" class="footer-brand">RingoSys Blog</a>
+      <span>Tech · Learning · Algorithms · Research · Life</span>
     </div>
   </footer>
   <script id="post-index" type="application/json">{{POST_INDEX}}</script>

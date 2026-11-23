@@ -38,7 +38,7 @@ if (protection && !protection.hidden) {
 
   function startUnlockForm() {
     if (!subtle) {
-      status.textContent = "请使用支持加密功能的浏览器，通过 HTTPS 或 localhost 打开此页面。";
+      status.textContent = "Open this page over HTTPS or on localhost in a browser that supports Web Crypto.";
       return;
     }
 
@@ -49,7 +49,7 @@ if (protection && !protection.hidden) {
         throw new Error("Missing encrypted article");
       }
     } catch {
-      status.textContent = "文章暂时无法解锁，请刷新页面后重试。";
+      status.textContent = "This article could not be unlocked. Refresh the page and try again.";
       return;
     }
 
@@ -66,7 +66,7 @@ if (protection && !protection.hidden) {
 
       passwordInput.readOnly = true;
       unlockButton.disabled = true;
-      unlockButton.textContent = "正在解锁…";
+      unlockButton.textContent = "Unlocking…";
       passwordInput.removeAttribute("aria-invalid");
       status.textContent = "";
 
@@ -78,14 +78,14 @@ if (protection && !protection.hidden) {
         articleBody.hidden = false;
         articleBody.focus();
       } catch {
-        status.textContent = "密码有误或文章无法读取，请检查密码后重试。";
+        status.textContent = "Check the password and try again.";
         passwordInput.setAttribute("aria-invalid", "true");
         passwordInput.focus();
         passwordInput.select();
       } finally {
         passwordInput.readOnly = false;
         unlockButton.disabled = false;
-        unlockButton.textContent = "解锁文章";
+        unlockButton.textContent = "Unlock article";
       }
     });
 

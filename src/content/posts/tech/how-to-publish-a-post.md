@@ -1,66 +1,66 @@
 ---
-title: 如何发布博客文章
-description: 从创建 Markdown 到 GitHub Pages 上线，记录公开文章和密码保护文章的发布流程。
+title: How to Publish a Post
+description: Write Markdown and publish public or password-protected posts on GitHub Pages.
 date: 2026-11-23
 visibility: public
 ---
 
-## 创建 Markdown 文件
+## Create a Markdown file
 
-公开文章放在 `src/content/posts/` 下的大类目录里，可以继续建子目录。可以在编辑器里新建文件，或打开 GitHub 的文章目录，点击 **Add file → Create new file**，输入包含目录的文件名。 [GitHub 上的文章目录](https://github.com/RingoSys/RingoSys.github.io/tree/main/src/content/posts)
+Put a public post in a category folder under `src/content/posts/`. Create the file in an editor, or select **Add file → Create new file** in GitHub and enter the folder path along with the filename. [Open the posts folder](https://github.com/RingoSys/RingoSys.github.io/tree/main/src/content/posts)
 
-- `tech/my-first-post.md` 归入「技术心得」。
-- `algorithm/graph-theory/shortest-path/dijkstra.md` 归入「算法竞赛 → graph-theory」，并从路径自动生成 `algorithm`、`graph-theory` 和 `shortest-path` 三个标签。文章详情会显示这些标签，首页搜索公开文章时也会匹配它们。
+- `tech/my-first-post.md` appears under **Tech**.
+- `algorithm/work/pdd/2026-10-26.md` appears under **Algorithms → work → pdd**. Use the arrow beside any folder to expand or collapse it. Select a folder to see its posts and the posts in its subfolders.
 
-侧栏根据前两级目录生成大类和小类。点击大类旁的按钮展开，点击小类名筛选。
+Subfolders appear in the sidebar with the names you give them. Every folder in the path also becomes a tag. The second example generates `algorithm`, `work`, and `pdd` as tags, which appear on the article page and can be used to search for public posts.
 
-目录名用英文。Markdown 文件名用小写英文字母、数字和连字符，并在整个博客内保持唯一。上面的 `dijkstra.md` 发布后的路径是 `/posts/dijkstra/`。
+Use lowercase letters, digits, and hyphens for the Markdown filename. Give each file a unique name across the blog. The file `2026-10-26.md` will be published at `/posts/2026-10-26/`.
 
-## 写文章信息和正文
+## Write the post
 
-把下面的模板复制到文件里。两个 `---` 之间填写文章信息，后面写 Markdown 正文。页面会用 `title` 生成文章标题，正文小节可以从 `##` 开始。
+Copy this template into your file. Fill in the fields between the `---` lines, then write the post in Markdown. The page uses `title` as the article heading, so body headings can start with `##`.
 
 ```markdown
 ---
-title: 我的第一篇文章
-description: 用一句话概括文章内容。
+title: My First Post
+description: Sum up the post in one sentence.
 date: 2026-11-23
 visibility: public
 ---
 
-## 这篇文章的第一节
+## First section
 
-在这里写正文。
+Write the post here.
 ```
 
-把 `date` 换成文章的发布日期。按目录组织时，分类和标签由路径自动生成。直接放在 `src/content/posts/` 的文章用 `category` 指定大类。
+Use the publication date for `date`. Posts organized in folders get their category and tags from the path. For a post placed directly in `src/content/posts/`, use the `category` field to set its category.
 
-代码块会尝试自动识别语言。也可以在代码块开头标注 `cpp`、`cuda`、`python` 或 `bash` 来指定高亮，输出和日志可标注 `text`。
+The blog can detect the language of a code block. Add a language such as `cpp`, `cuda`, `python`, or `bash` to the opening fence to choose the highlighting, or use `text` for logs and plain output.
 
-正文里用一对反引号标出的内容会显示为黑色粗体，英语部分优先使用 Times New Roman。例如 `` `Grid` `` 和 `` `float**` `` 会显示成 `Grid` 和 `float**`。
+A single pair of backticks marks text in bold black, with Times New Roman preferred for Latin characters. For example, write `` `Grid` `` or `` `float**` `` to render `Grid` or `float**`.
 
-| 大类目录 | 博客上显示的名称 |
+| Top-level folder | Sidebar label |
 | --- | --- |
-| `tech` | 技术心得 |
-| `learning` | 学习笔记 |
-| `algorithm` | 算法竞赛 |
-| `research` | 学术分享 |
-| `life` | 生活随笔 |
+| `tech` | Tech |
+| `learning` | Learning |
+| `algorithm` | Algorithms |
+| `research` | Research |
+| `life` | Life |
 
-## 提交并查看发布结果
+## Commit and publish
 
-在 GitHub 网页写完后，点击 **Commit changes**，提交到 `main`。如果在本地编辑，可以先运行 `npm run dev` 预览，再在仓库目录运行下面的命令。
+When editing on GitHub, select **Commit changes** and commit to `main`. When editing locally, run `npm run dev` to preview the post, then run these commands in the repository directory.
 
 ```bash
 git add src/content/posts/tech/my-first-post.md
-git commit -m "发布我的第一篇文章"
+git commit -m "Publish my first post"
 git push origin main
 ```
 
-提交进入 `main` 后，GitHub Actions 会自动部署。等最新一条记录出现绿色对勾，再刷新博客首页并点开新文章。 [查看发布进度](https://github.com/RingoSys/RingoSys.github.io/actions/workflows/pages.yml)
+GitHub Actions deploys the site whenever a commit reaches `main`. Once the latest run shows a green check, open the blog and find the new post. [Check the deployment](https://github.com/RingoSys/RingoSys.github.io/actions/workflows/pages.yml)
 
-## 发布密码保护文章
+## Publish a password-protected post
 
-在本地的 `content/private/` 写原稿，沿用公开文章的目录规则，并把 `visibility` 设为 `private`。用 GPG 加密 Markdown 源文件，将加密后的 `.md.gpg` 放进 `src/content/protected/` 下对应的目录，再提交到仓库。
+Write the source under `content/private/` using the same folder structure and set `visibility` to `private`. Encrypt the Markdown file with GPG, put the resulting `.md.gpg` file under `src/content/protected/` with the same folder structure, then commit it.
 
-首次发布需要在 GitHub Actions Secrets 中设置源文件口令和访客阅读密码。文章标题、摘要、日期、分类和标签会公开显示，访客用阅读密码解锁正文。 [加密命令和 Secrets 设置](https://github.com/RingoSys/RingoSys.github.io#写密码保护文章)
+Before the first protected deployment, set the source passphrase and reader password in GitHub Actions Secrets. The title, summary, date, category, and tags appear on the public site. Readers enter the password to unlock the body. [GPG commands and secret settings](https://github.com/RingoSys/RingoSys.github.io#写密码保护文章)

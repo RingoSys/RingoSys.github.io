@@ -1,17 +1,17 @@
 const categories = {
-  all: "全部文章",
-  tech: "技术心得",
-  learning: "学习笔记",
-  algorithm: "算法竞赛",
-  research: "学术分享",
-  life: "生活随笔",
+  all: "All posts",
+  tech: "Tech",
+  learning: "Learning",
+  algorithm: "Algorithms",
+  research: "Research",
+  life: "Life",
 };
 
 const pageSize = 6;
 const search = document.querySelector("#article-search");
 const sort = document.querySelector("#article-sort");
 const filters = document.querySelector("#category-filters");
-const filterButtons = filters.querySelectorAll("button");
+const categoryButtons = filters.querySelectorAll("button[data-category]");
 const links = document.querySelectorAll("[data-nav-category]");
 const grid = document.querySelector("#article-grid");
 const count = document.querySelector("#article-count");
@@ -21,7 +21,8 @@ const archiveTitle = document.querySelector("#archive-title");
 
 let posts = [];
 let state = readState();
-const categoryGroups = new Map();
+const categoryTrees = new Map();
+let folderListId = 0;
 
 function readState() {
   const parameters = new URLSearchParams(location.search);
@@ -86,75 +87,110 @@ function icon(name) {
   return svg;
 }
 
-function setCategoryExpanded(group, expanded) {
-  group.toggle.setAttribute("aria-expanded", String(expanded));
-  group.list.hidden = !expanded;
+function postFolders(post) {
+  if (Array.isArray(post.folderPath) && post.folderPath[0] === post.category) {
+    return post.folderPath.slice(1);
+  }
+  return post.subcategory ? [post.subcategory] : [];
+}
+
+function makeFolder() {
+  return { count: 0, children: new Map() };
+}
+
+function addPostToCategory(post) {
+  let folder = categoryTrees.get(post.category);
+  if (!folder) return;
+
+  folder.count += 1;
+  for (const name of postFolders(post)) {
+    if (!folder.children.has(name)) folder.children.set(name, makeFolder());
+    folder = folder.children.get(name);
+    folder.count += 1;
+  }
+}
+
+function setFolderExpanded(folder, expanded) {
+  folder.toggle.setAttribute("aria-expanded", String(expanded));
+  folder.list.hidden = !expanded;
+}
+
+function buildFolderBranch(button, category, folder, path) {
+  const branch = node("div", "category-branch");
+  const row = node("div", "category-filter-row");
+  const toggle = node("button", "category-toggle");
+  const list = node("ul", "subcategory-filters");
+  const label = `Subfolders of ${[categories[category], ...path].join(" / ")}`;
+
+  folderListId += 1;
+  list.id = `subcategory-filters-${folderListId}`;
+  list.setAttribute("aria-label", label);
+  toggle.type = "button";
+  toggle.setAttribute("aria-label", label);
+  toggle.setAttribute("aria-controls", list.id);
+  toggle.append(icon("chevron"));
+
+  for (const name of [...folder.children.keys()].sort((first, second) => first.localeCompare(second))) {
+    const childFolder = folder.children.get(name);
+    const childPath = [...path, name];
+    const item = node("li");
+    const child = node("button", "subcategory-filter", name);
+    child.type = "button";
+    child.dataset.category = category;
+    child.dataset.subcategory = childPath.join("/");
+    child.setAttribute("aria-pressed", "false");
+
+    const total = node("span", "category-count", String(childFolder.count));
+    total.setAttribute("aria-hidden", "true");
+    child.append(total);
+    item.append(childFolder.children.size ? buildFolderBranch(child, category, childFolder, childPath) : child);
+    list.append(item);
+  }
+
+  folder.toggle = toggle;
+  folder.list = list;
+  setFolderExpanded(folder, false);
+  toggle.addEventListener("click", () => setFolderExpanded(folder, list.hidden));
+
+  button.replaceWith(branch);
+  row.append(button, toggle);
+  branch.append(row, list);
+  return branch;
 }
 
 function buildCategoryFilters() {
-  for (const button of filterButtons) {
-    const category = button.dataset.category;
-    const categoryPosts = category === "all" ? posts : posts.filter((post) => post.category === category);
-    button.querySelector(".category-count").textContent = categoryPosts.length;
-    if (category === "all") continue;
-
-    const childCounts = new Map();
-    for (const { subcategory } of categoryPosts) {
-      if (subcategory) childCounts.set(subcategory, (childCounts.get(subcategory) ?? 0) + 1);
-    }
-    if (childCounts.size === 0) continue;
-
-    const branch = node("div", "category-branch");
-    const row = node("div", "category-filter-row");
-    const toggle = node("button", "category-toggle");
-    toggle.type = "button";
-    toggle.dataset.toggleCategory = category;
-    toggle.setAttribute("aria-label", `${categories[category]}的子分类`);
-    toggle.append(icon("chevron"));
-
-    const list = node("ul", "subcategory-filters");
-    list.id = `subcategory-filters-${category}`;
-    list.setAttribute("aria-label", `${categories[category]}的子分类`);
-    toggle.setAttribute("aria-controls", list.id);
-    const children = new Map();
-
-    for (const name of [...childCounts.keys()].sort((first, second) => first.localeCompare(second, "zh-CN"))) {
-      const item = node("li");
-      const child = node("button", "subcategory-filter", name);
-      child.type = "button";
-      child.dataset.category = category;
-      child.dataset.subcategory = name;
-      child.setAttribute("aria-pressed", "false");
-      const total = node("span", "category-count", String(childCounts.get(name)));
-      total.setAttribute("aria-hidden", "true");
-      child.append(total);
-      item.append(child);
-      list.append(item);
-      children.set(name, child);
-    }
-
-    const group = { toggle, list, children };
-    setCategoryExpanded(group, false);
-    categoryGroups.set(category, group);
-    button.replaceWith(branch);
-    row.append(button, toggle);
-    branch.append(row, list);
+  for (const category of Object.keys(categories)) {
+    if (category !== "all") categoryTrees.set(category, makeFolder());
   }
+  for (const post of posts) addPostToCategory(post);
 
-  filters.classList.toggle("has-subcategories", categoryGroups.size > 0);
+  for (const button of categoryButtons) {
+    const category = button.dataset.category;
+    const folder = categoryTrees.get(category);
+    button.querySelector(".category-count").textContent = folder?.count ?? posts.length;
+    if (folder?.children.size) {
+      buildFolderBranch(button, category, folder, []);
+      filters.classList.add("has-subcategories");
+    }
+  }
 }
 
 function restoreSubcategory() {
   if (state.subcategory === null) return;
 
-  const group = categoryGroups.get(state.category);
-  if (group?.children.has(state.subcategory)) {
-    setCategoryExpanded(group, true);
-    return;
+  const ancestors = [];
+  let folder = categoryTrees.get(state.category);
+  for (const name of state.subcategory.split("/")) {
+    const child = folder?.children.get(name);
+    if (!child) {
+      state.subcategory = null;
+      history.replaceState(null, "", stateUrl(state));
+      return;
+    }
+    ancestors.push(folder);
+    folder = child;
   }
-
-  state.subcategory = null;
-  history.replaceState(null, "", stateUrl(state));
+  for (const ancestor of ancestors) setFolderExpanded(ancestor, true);
 }
 
 function buildCard(post) {
@@ -162,8 +198,7 @@ function buildCard(post) {
   const card = node("article", locked ? "article-card article-card-private" : "article-card");
 
   const meta = node("div", "card-meta");
-  const categoryName = categories[post.category];
-  const categoryText = post.subcategory ? `${categoryName} · ${post.subcategory}` : categoryName;
+  const categoryText = [categories[post.category], ...postFolders(post)].join(" / ");
   const category = node("span", `category-label category-${post.category}`, categoryText);
   const date = node("time", "card-date", post.date.replaceAll("-", "."));
   date.dateTime = post.date;
@@ -174,16 +209,16 @@ function buildCard(post) {
   titleLink.href = post.url;
   title.append(titleLink);
 
-  const description = node("p", "card-description", locked ? "这篇文章已加密，输入密码后可阅读。" : post.description);
+  const description = node("p", "card-description", locked ? "Enter the password to read this post." : post.description);
 
   const footer = node("div", "card-footer");
   if (locked) {
     const status = node("span", "card-status");
-    status.append(icon("lock"), "密码保护");
+    status.append(icon("lock"), "Password protected");
     footer.append(status);
   }
 
-  const action = node("a", "card-action", locked ? "解锁文章" : "阅读全文");
+  const action = node("a", "card-action", locked ? "Unlock post" : "Read post");
   action.href = post.url;
   action.setAttribute("aria-label", `${action.textContent} · ${post.title}`);
   footer.append(action);
@@ -197,14 +232,14 @@ function renderPagination(page, total) {
   pagination.replaceChildren();
   if (total <= 1) return;
 
-  const previous = node("button", "pagination-step", "上一页");
+  const previous = node("button", "pagination-step", "Previous");
   previous.type = "button";
   previous.dataset.page = String(page - 1);
   previous.disabled = page === 1;
 
-  const position = node("span", "pagination-position", `第 ${page} / ${total} 页`);
+  const position = node("span", "pagination-position", `Page ${page} of ${total}`);
 
-  const next = node("button", "pagination-step", "下一页");
+  const next = node("button", "pagination-step", "Next");
   next.type = "button";
   next.dataset.page = String(page + 1);
   next.disabled = page === total;
@@ -214,18 +249,21 @@ function renderPagination(page, total) {
 
 function matchingPosts() {
   const terms = state.query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const selectedFolders = state.subcategory?.split("/") ?? [];
+  const direction = state.sort === "oldest" ? 1 : -1;
   return posts.filter((post) => {
     if (state.category !== "all" && state.category !== post.category) return false;
-    if (state.subcategory && state.subcategory !== post.subcategory) return false;
 
-    const hierarchy = [categories[post.category], post.subcategory];
+    const path = postFolders(post);
+    if (!selectedFolders.every((name, index) => name === path[index])) return false;
+
+    const hierarchy = [categories[post.category], ...path, path.join("/")];
     const searchable = post.visibility === "private"
-      ? [post.title, ...hierarchy, "密码保护", "私密"]
+      ? [post.title, ...hierarchy, "password protected", "private"]
       : [post.title, post.description, ...hierarchy, ...post.tags];
     const text = searchable.join(" ").toLowerCase();
     return terms.every((term) => text.includes(term));
   }).sort((first, second) => {
-    const direction = state.sort === "oldest" ? 1 : -1;
     return direction * first.date.localeCompare(second.date) || first.slug.localeCompare(second.slug);
   });
 }
@@ -233,13 +271,9 @@ function matchingPosts() {
 function render() {
   search.value = state.query;
   sort.value = state.sort;
-  for (const button of filterButtons) {
-    button.setAttribute("aria-pressed", String(button.dataset.category === state.category && !state.subcategory));
-  }
-  for (const [category, group] of categoryGroups) {
-    for (const [name, button] of group.children) {
-      button.setAttribute("aria-pressed", String(category === state.category && name === state.subcategory));
-    }
+  for (const button of filters.querySelectorAll("button[data-category]")) {
+    const selected = button.dataset.category === state.category && (button.dataset.subcategory ?? null) === state.subcategory;
+    button.setAttribute("aria-pressed", String(selected));
   }
   for (const link of links) {
     if (link.dataset.navCategory === state.category) {
@@ -259,9 +293,9 @@ function render() {
 
   const first = (page - 1) * pageSize;
   grid.replaceChildren(...matches.slice(first, first + pageSize).map(buildCard));
-  count.textContent = `共 ${matches.length} 篇文章`;
+  count.textContent = matches.length === 1 ? "1 post" : `${matches.length} posts`;
   message.hidden = matches.length > 0;
-  message.textContent = state.query.trim() ? "没有找到符合条件的文章。" : "暂无文章。";
+  message.textContent = state.query.trim() ? "No posts match your search." : "No posts yet.";
   renderPagination(page, pages);
 }
 
@@ -283,13 +317,6 @@ try {
   search.addEventListener("input", () => updateState({ query: search.value }, { replace: true }));
   sort.addEventListener("change", () => updateState({ sort: sort.value }));
   filters.addEventListener("click", (event) => {
-    const toggle = event.target.closest("[data-toggle-category]");
-    if (toggle) {
-      const group = categoryGroups.get(toggle.dataset.toggleCategory);
-      setCategoryExpanded(group, group.list.hidden);
-      return;
-    }
-
     const filter = event.target.closest("button[data-category]");
     if (filter) updateState({
       category: filter.dataset.category,
@@ -315,5 +342,5 @@ try {
   });
 } catch (error) {
   console.error("Could not load the article index.", error);
-  message.textContent = "文章目录加载失败，请刷新页面重试。";
+  message.textContent = "The post list could not load. Refresh the page to try again.";
 }

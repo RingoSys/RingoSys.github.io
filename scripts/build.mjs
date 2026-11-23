@@ -35,11 +35,11 @@ const deriveKey = promisify(pbkdf2);
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const demoPassword = 'ringo-demo';
 const categoryLabels = {
-  tech: '技术心得',
-  algorithm: '算法竞赛',
-  learning: '学习笔记',
-  research: '学术分享',
-  life: '生活随笔',
+  tech: 'Tech',
+  algorithm: 'Algorithms',
+  learning: 'Learning',
+  research: 'Research',
+  life: 'Life',
 };
 const mediaTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -54,14 +54,14 @@ const mediaTypes = {
   '.webp': 'image/webp',
   '.woff2': 'font/woff2',
 };
-const demoMarkdown = `## 这是一篇受保护的示例文章
+const demoMarkdown = `## Password-protected demo
 
-输入示例口令后，浏览器会在本地解锁这段正文。它用于体验阅读流程。
+The demo password unlocks this article in your browser.
 
-### 记录提纲
+### Notes template
 
-- 写清楚这次观察想回答的问题。
-- 补充复现条件、得到的结论和后续验证方向。`;
+- Start with the question you wanted to answer.
+- Record how to reproduce the result, what you found, and what to test next.`;
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -153,6 +153,7 @@ async function readPosts(sourcePath, privateSource) {
       title: title.trim(),
       description: description.trim(),
       category,
+      folderPath: folders,
       date,
       tags,
       visibility,
@@ -223,7 +224,7 @@ async function assetVersions() {
 
 async function renderPost(template, post, passwords, versions) {
   const { metadata, body } = post;
-  const { slug, title, description, category, subcategory, date, tags, visibility, demo } = metadata;
+  const { slug, title, description, category, folderPath, date, tags, visibility, demo } = metadata;
   const data = { ...metadata };
   const isPrivate = visibility === 'private';
   const html = markdown.render(demo ? demoMarkdown : body);
@@ -235,9 +236,12 @@ async function renderPost(template, post, passwords, versions) {
     data.encrypted = await encryptArticle(html, password);
   }
 
-  const subcategoryCrumb = subcategory === undefined ? '' : (
-    `<li><a href="../../?${escapeHtml(new URLSearchParams({ category, subcategory }).toString())}#articles">${escapeHtml(subcategory)}</a></li>`
-  );
+  const nestedFolders = folderPath.slice(1);
+  const subcategoryCrumbs = nestedFolders.map((folder, index) => {
+    const subcategory = nestedFolders.slice(0, index + 1).join('/');
+    const query = new URLSearchParams({ category, subcategory });
+    return `<li><a href="../../?${escapeHtml(query.toString())}#articles">${escapeHtml(folder)}</a></li>`;
+  }).join('');
 
   return renderTemplate(template, {
     ...versions,
@@ -245,7 +249,7 @@ async function renderPost(template, post, passwords, versions) {
     DESCRIPTION: escapeHtml(description),
     CATEGORY: category,
     CATEGORY_LABEL: categoryLabels[category],
-    SUBCATEGORY_CRUMB: subcategoryCrumb,
+    SUBCATEGORY_CRUMB: subcategoryCrumbs,
     DATE: date,
     TAGS_HTML: tags.map((tag) => `<li># ${escapeHtml(tag)}</li>`).join(''),
     PUBLIC_HIDDEN: isPrivate ? 'hidden' : '',

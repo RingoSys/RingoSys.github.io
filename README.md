@@ -26,9 +26,9 @@ npm run dev
 
 ## 写公开文章
 
-在 `src/content/posts/` 下建英文目录，第一级决定大类，第二级决定侧栏小类。目录可以继续向下嵌套，每一级目录名都会自动成为文章标签。首页搜索公开文章时会匹配这些标签。例如 `algorithm/graph-theory/shortest-path/dijkstra.md` 归入「算法竞赛 → graph-theory」，并生成 `algorithm`、`graph-theory`、`shortest-path` 三个标签。
+在 `src/content/posts/` 下建英文目录，第一级决定大类，其后的每层目录都会出现在侧栏。目录名也会自动成为文章标签，首页搜索公开文章时会匹配这些标签。例如 `algorithm/work/pdd/2026-10-26.md` 会出现在 **Algorithms → work → pdd** 下，并生成 `algorithm`、`work`、`pdd` 三个标签。
 
-有文章的小类会自动出现在侧栏，点击大类旁的按钮展开或收起。点击大类查看该大类下的所有文章，点击小类查看该小类的文章。
+包含文章的目录会在发布时自动出现在侧栏。点目录旁的箭头展开或收起，点击目录名可查看这个目录及其后代目录中的文章。
 
 Markdown 文件名使用小写英文字母、数字和连字符，文件名在整个博客内须唯一。例如 `dijkstra.md` 发布为 `/posts/dijkstra/`。分类目录里的文章只需填写下列文章信息。直接放在 `src/content/posts/` 的文章使用文章头中的 `category`。
 
@@ -45,11 +45,11 @@ visibility: public
 
 | 大类目录 | 首页分类 |
 | --- | --- |
-| `tech` | 技术心得 |
-| `learning` | 学习笔记 |
-| `algorithm` | 算法竞赛 |
-| `research` | 学术分享 |
-| `life` | 生活随笔 |
+| `tech` | Tech |
+| `learning` | Learning |
+| `algorithm` | Algorithms |
+| `research` | Research |
+| `life` | Life |
 
 ## 写密码保护文章
 
