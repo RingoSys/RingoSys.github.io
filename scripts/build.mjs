@@ -78,22 +78,35 @@ function isCalendarDate(value) {
 }
 
 async function readPosts(sourcePath, privateSource) {
-  let entries;
+  const directory = resolve(root, sourcePath);
   try {
-    entries = await readdir(resolve(root, sourcePath), { withFileTypes: true });
+    if ((await lstat(directory)).isSymbolicLink()) return [];
   } catch (error) {
     if (privateSource && error.code === 'ENOENT') return [];
     throw error;
   }
+  const entries = await readdir(directory, { recursive: true, withFileTypes: true });
 
   const posts = [];
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
-    const source = `${sourcePath}/${entry.name}`;
+    const filePath = resolve(entry.parentPath, entry.name);
+    const parts = relative(directory, filePath).split(sep);
+    const source = `${sourcePath}/${parts.join('/')}`;
+    const folders = parts.slice(0, -1);
+    if (folders.length > 2) throw new Error(`${source} 的文章目录最多支持两级。`);
+    const [folderCategory, subcategory] = folders;
+    if (folderCategory && !Object.hasOwn(categoryLabels, folderCategory)) {
+      throw new Error(`${source} 的分类目录应为以下值之一：${Object.keys(categoryLabels).join('、')}。`);
+    }
+    if (subcategory && /[^A-Za-z0-9 _-]/.test(subcategory)) {
+      throw new Error(`${source} 的子分类目录名只能包含英文字母、数字、空格、连字符和下划线。`);
+    }
+
     const slug = entry.name.slice(0, -3);
     if (!slugPattern.test(slug)) throw new Error(`${source} 的文件名需使用小写字母、数字和连字符。`);
 
-    const file = await readFile(resolve(root, source), 'utf8');
+    const file = await readFile(filePath, 'utf8');
     const frontMatter = file.match(/^\uFEFF?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
     if (!frontMatter) throw new Error(`${source} 缺少 YAML 文章信息。`);
 
@@ -105,7 +118,8 @@ async function readPosts(sourcePath, privateSource) {
     }
 
     if (!isRecord(fields)) throw new Error(`${source} 的文章信息需为 YAML 映射。`);
-    const { title, description, category, date, tags, visibility, demo } = fields;
+    const { title, description, date, tags, visibility, demo } = fields;
+    const category = folderCategory ?? fields.category;
     if (!nonemptyString(title) || !nonemptyString(description)) {
       throw new Error(`${source} 需要填写标题和摘要。`);
     }
@@ -142,6 +156,7 @@ async function readPosts(sourcePath, privateSource) {
       visibility,
       url: `./posts/${slug}/`,
     };
+    if (subcategory !== undefined) metadata.subcategory = subcategory;
     if (demo) metadata.demo = true;
     posts.push({ metadata, body });
   }
@@ -206,7 +221,7 @@ async function assetVersions() {
 
 async function renderPost(template, post, passwords, versions) {
   const { metadata, body } = post;
-  const { slug, title, description, category, date, tags, visibility, demo } = metadata;
+  const { slug, title, description, category, subcategory, date, tags, visibility, demo } = metadata;
   const data = { ...metadata };
   const isPrivate = visibility === 'private';
   const html = markdown.render(demo ? demoMarkdown : body);
@@ -218,12 +233,17 @@ async function renderPost(template, post, passwords, versions) {
     data.encrypted = await encryptArticle(html, password);
   }
 
+  const subcategoryCrumb = subcategory === undefined ? '' : (
+    `<li><a href="../../?${escapeHtml(new URLSearchParams({ category, subcategory }).toString())}#articles">${escapeHtml(subcategory)}</a></li>`
+  );
+
   return renderTemplate(template, {
     ...versions,
     TITLE: escapeHtml(title),
     DESCRIPTION: escapeHtml(description),
     CATEGORY: category,
     CATEGORY_LABEL: categoryLabels[category],
+    SUBCATEGORY_CRUMB: subcategoryCrumb,
     DATE: date,
     TAGS_HTML: tags.map((tag) => `<li># ${escapeHtml(tag)}</li>`).join(''),
     PUBLIC_HIDDEN: isPrivate ? 'hidden' : '',

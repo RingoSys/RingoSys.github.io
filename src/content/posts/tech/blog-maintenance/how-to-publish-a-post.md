@@ -1,7 +1,6 @@
 ---
 title: 如何发布博客文章
 description: 从创建 Markdown 到 GitHub Pages 上线，记录公开文章和密码保护文章的发布流程。
-category: tech
 date: 2026-11-23
 tags: [博客, Markdown, GitHub Pages]
 visibility: public
@@ -9,9 +8,12 @@ visibility: public
 
 ## 创建 Markdown 文件
 
-公开文章放在 `src/content/posts/`。可以在编辑器里新建文件，也可以打开 [GitHub 上的文章目录](https://github.com/RingoSys/RingoSys.github.io/tree/main/src/content/posts)，点击 **Add file → Create new file**。
+公开文章放在 `src/content/posts/` 下的大类目录里，也可以再加一层小类。可以在编辑器里新建文件，或打开 GitHub 的文章目录，点击 **Add file → Create new file**，输入包含目录的文件名。 [GitHub 上的文章目录](https://github.com/RingoSys/RingoSys.github.io/tree/main/src/content/posts)
 
-用小写英文字母、数字和连字符命名，例如 `my-first-post.md`。文件名决定文章的访问路径，这个例子发布后的路径是 `/posts/my-first-post/`。
+- `tech/my-first-post.md` 归入「技术心得」。
+- `algorithm/graph-theory/shortest-path.md` 归入「算法竞赛 → graph-theory」。侧栏会自动生成小类，可以点击大类旁的按钮展开，点击小类名筛选。
+
+目录名用英文。Markdown 文件名用小写英文字母、数字和连字符，并在整个博客内保持唯一。上面的 `shortest-path.md` 发布后的路径是 `/posts/shortest-path/`。
 
 ## 写文章信息和正文
 
@@ -21,7 +23,6 @@ visibility: public
 ---
 title: 我的第一篇文章
 description: 用一句话概括文章内容。
-category: tech
 date: 2026-11-23
 tags: [笔记, Markdown]
 visibility: public
@@ -32,13 +33,13 @@ visibility: public
 在这里写正文。
 ```
 
-把 `date` 换成文章的发布日期。每篇文章选一个大类，可以用多个标签细分主题。比如算法竞赛的图论文章可以填 `category: algorithm` 和 `tags: [图论, 最短路]`。
+把 `date` 换成文章的发布日期。目录决定大类和小类，`tags` 可以继续用于搜索主题，例如 `tags: [图论, 最短路]`。直接放在 `src/content/posts/` 的文章用 `category` 指定大类。
 
 代码块会尝试自动识别语言。也可以在代码块开头标注 `cpp`、`cuda`、`python` 或 `bash` 来指定高亮，输出和日志可标注 `text`。
 
 正文里用一对反引号标出的内容会显示为黑色粗体，英语部分优先使用 Times New Roman。例如 `` `Grid` `` 和 `` `float**` `` 会显示成 `Grid` 和 `float**`。
 
-| 分类值 | 博客上显示的名称 |
+| 大类目录 | 博客上显示的名称 |
 | --- | --- |
 | `tech` | 技术心得 |
 | `learning` | 学习笔记 |
@@ -51,7 +52,7 @@ visibility: public
 在 GitHub 网页写完后，点击 **Commit changes**，提交到 `main`。如果在本地编辑，可以先运行 `npm run dev` 预览，再在仓库目录运行下面的命令。
 
 ```bash
-git add src/content/posts/my-first-post.md
+git add src/content/posts/tech/my-first-post.md
 git commit -m "发布我的第一篇文章"
 git push origin main
 ```
@@ -60,6 +61,6 @@ git push origin main
 
 ## 发布密码保护文章
 
-在本地的 `content/private/` 写原稿，把文章信息中的 `visibility` 改为 `private`。用 GPG 加密 Markdown 源文件，将加密后的 `.md.gpg` 放进 `src/content/protected/`，再提交到仓库。
+在本地的 `content/private/` 写原稿，按大类和小类建目录，并把 `visibility` 设为 `private`。用 GPG 加密 Markdown 源文件，将加密后的 `.md.gpg` 放进 `src/content/protected/` 下对应的目录，再提交到仓库。
 
-首次发布需要在 GitHub Actions Secrets 中设置源文件口令和访客阅读密码。文章标题、摘要、日期和标签会公开显示，访客用阅读密码解锁正文。 [加密命令和 Secrets 设置](https://github.com/RingoSys/RingoSys.github.io#写密码保护文章)
+首次发布需要在 GitHub Actions Secrets 中设置源文件口令和访客阅读密码。文章标题、摘要、日期、分类和标签会公开显示，访客用阅读密码解锁正文。 [加密命令和 Secrets 设置](https://github.com/RingoSys/RingoSys.github.io#写密码保护文章)

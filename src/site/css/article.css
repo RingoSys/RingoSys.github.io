@@ -61,6 +61,11 @@
   color: var(--muted);
 }
 
+.article-breadcrumb li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .article-breadcrumb a {
   color: var(--muted);
   text-decoration: none;

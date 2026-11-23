@@ -26,13 +26,16 @@ npm run dev
 
 ## 写公开文章
 
-在 `src/content/posts/` 新建小写英文文件名，例如 `my-first-post.md`。文件名前缀会成为文章地址的一部分。
+在 `src/content/posts/` 下按大类和可选的小类建英文目录。例如 `tech/my-first-post.md` 归入技术心得，`algorithm/graph-theory/shortest-path.md` 归入算法竞赛的 `graph-theory` 小类。第一个目录决定大类，第二个目录的名字就是侧栏的小类名。
+
+有文章的小类会自动出现在侧栏，点击大类旁的按钮展开或收起。点击大类查看该大类下的所有文章，点击小类查看该小类的文章。
+
+Markdown 文件名使用小写英文字母、数字和连字符，文件名在整个博客内须唯一。例如 `shortest-path.md` 发布为 `/posts/shortest-path/`。目录里的文章由路径确定分类。直接放在 `src/content/posts/` 的文章使用文章头中的 `category`。
 
 ```markdown
 ---
 title: 我的第一篇文章
 description: 一句话介绍这篇文章。
-category: tech
 date: 2026-11-23
 tags: [笔记, Markdown]
 visibility: public
@@ -41,17 +44,17 @@ visibility: public
 在这里写 Markdown 正文。
 ```
 
-| `category` | 首页分类 |
+| 大类目录 | 首页分类 |
 | --- | --- |
 | `tech` | 技术心得 |
-| `algorithm` | 算法竞赛 |
 | `learning` | 学习笔记 |
+| `algorithm` | 算法竞赛 |
 | `research` | 学术分享 |
 | `life` | 生活随笔 |
 
 ## 写密码保护文章
 
-1. 在 `content/private/` 下写文章，沿用上面的格式，把 `visibility` 改为 `private`。Git 默认忽略这个目录。标题、摘要、日期和标签会出现在公开站点上。
+1. 在 `content/private/` 下写文章，可以按相同的大类和小类目录组织，例如 `content/private/tech/notes/my-notes.md`。把 `visibility` 设为 `private`。Git 默认忽略这个目录。标题、摘要、日期、分类和标签会出现在公开站点上。
 2. 本地预览前，在 Bash 中输入阅读密码并传给构建。
 
    ```bash
@@ -61,13 +64,13 @@ visibility: public
    unset BLOG_PRIVATE_PASSWORD
    ```
 
-3. 要发布，把 Markdown 源文件加密后提交到 `src/content/protected/`。这一层使用单独的源文件口令。
+3. 要发布，把 Markdown 源文件加密后提交到 `src/content/protected/`，沿用原稿的大类和小类目录。这一层使用单独的源文件口令。
 
    ```bash
-   mkdir -p src/content/protected
+   mkdir -p src/content/protected/tech/notes
    gpg --symmetric --cipher-algo AES256 \
-     --output src/content/protected/my-notes.md.gpg \
-     content/private/my-notes.md
+     --output src/content/protected/tech/notes/my-notes.md.gpg \
+     content/private/tech/notes/my-notes.md
    ```
 
 4. 在 GitHub 仓库的 **Settings → Secrets and variables → Actions** 中设置仓库 Secrets。

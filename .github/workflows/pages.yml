@@ -28,8 +28,10 @@ jobs:
           BLOG_PRIVATE_PASSWORD: ${{ secrets.BLOG_PRIVATE_PASSWORD }}
           BLOG_PRIVATE_PASSWORDS: ${{ secrets.BLOG_PRIVATE_PASSWORDS }}
         run: |
-          shopt -s nullglob
-          encrypted_posts=(src/content/protected/*.md.gpg)
+          encrypted_posts=()
+          if [[ -d src/content/protected ]]; then
+            mapfile -d '' -t encrypted_posts < <(find src/content/protected -type f -name '*.md.gpg' -print0)
+          fi
           if (( ${#encrypted_posts[@]} )); then
             if [[ -z "$BLOG_PRIVATE_SOURCE_PASSPHRASE" ]]; then
               echo "::error::Missing BLOG_PRIVATE_SOURCE_PASSPHRASE for protected article sources"
@@ -39,9 +41,11 @@ jobs:
             mkdir -p content/private
             trap 'rm -rf content/private' EXIT
             for source in "${encrypted_posts[@]}"; do
-              filename="${source##*/}"
+              relative_path="${source#src/content/protected/}"
+              destination="content/private/${relative_path%.gpg}"
+              mkdir -p -- "${destination%/*}"
               gpg --batch --pinentry-mode loopback --passphrase-fd 3 \
-                --output "content/private/${filename%.gpg}" --decrypt "$source" \
+                --output "$destination" --decrypt "$source" \
                 3<<< "$BLOG_PRIVATE_SOURCE_PASSPHRASE"
             done
             umask 022
