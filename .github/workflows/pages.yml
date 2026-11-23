@@ -1,0 +1,67 @@
+name: Publish blog to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build site
+        env:
+          BLOG_PRIVATE_SOURCE_PASSPHRASE: ${{ secrets.BLOG_PRIVATE_SOURCE_PASSPHRASE }}
+          BLOG_PRIVATE_PASSWORD: ${{ secrets.BLOG_PRIVATE_PASSWORD }}
+          BLOG_PRIVATE_PASSWORDS: ${{ secrets.BLOG_PRIVATE_PASSWORDS }}
+        run: |
+          shopt -s nullglob
+          encrypted_posts=(src/content/protected/*.md.gpg)
+          if (( ${#encrypted_posts[@]} )); then
+            if [[ -z "$BLOG_PRIVATE_SOURCE_PASSPHRASE" ]]; then
+              echo "::error::Missing BLOG_PRIVATE_SOURCE_PASSPHRASE for protected article sources"
+              exit 1
+            fi
+            umask 077
+            mkdir -p content/private
+            trap 'rm -rf content/private' EXIT
+            for source in "${encrypted_posts[@]}"; do
+              filename="${source##*/}"
+              gpg --batch --pinentry-mode loopback --passphrase-fd 3 \
+                --output "content/private/${filename%.gpg}" --decrypt "$source" \
+                3<<< "$BLOG_PRIVATE_SOURCE_PASSPHRASE"
+            done
+            umask 022
+          fi
+          npm run build
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy site
+        id: deployment
+        uses: actions/deploy-pages@v4

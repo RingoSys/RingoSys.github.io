@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{DESCRIPTION}}">
+  <meta name="theme-color" content="#f8f7f4">
+  <title>{{TITLE}} | Ringo 的个人博客</title>
+  <link rel="icon" href="../../assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/article.css">
+  <script src="../../js/article.js" defer></script>
+</head>
+<body class="article-page">
+  <a class="skip-link" href="#article">跳到文章</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="site-brand" href="../../" aria-label="Ringo 的个人博客首页">
+        <span class="brand-mark" aria-hidden="true">R</span>
+        <span class="brand-name">Ringo<span>.</span></span>
+      </a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href="../../">首页</a>
+        <a href="../../?category=tech#articles">技术</a>
+        <a href="../../?category=learning#articles">学习</a>
+        <a href="../../?category=research#articles">学术</a>
+        <a href="../../?category=life#articles">生活</a>
+      </nav>
+      <div class="header-tools">
+        <a class="github-link" href="https://github.com/RingoSys" aria-label="RingoSys 的 GitHub 主页">
+          <svg aria-hidden="true"><use href="../../assets/icons.svg#github"></use></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container article-main">
+    <nav aria-label="面包屑" class="article-breadcrumb">
+      <ol>
+        <li><a href="../../#articles">文章</a></li>
+        <li><a href="../../?category={{CATEGORY}}#articles">{{CATEGORY_LABEL}}</a></li>
+        <li aria-current="page">正文</li>
+      </ol>
+    </nav>
+
+    <article id="article" class="article-sheet">
+      <header class="article-heading">
+        <div class="article-labels">
+          <a class="article-category" data-category="{{CATEGORY}}" href="../../?category={{CATEGORY}}#articles">{{CATEGORY_LABEL}}</a>
+          <span class="article-visibility" {{PRIVATE_HIDDEN}}>
+            <svg class="article-lock-icon" aria-hidden="true"><use href="../../assets/icons.svg#lock"></use></svg>
+            受保护
+          </span>
+        </div>
+        <h1>{{TITLE}}</h1>
+        <p class="article-summary">{{DESCRIPTION}}</p>
+        <div class="article-meta">
+          <time datetime="{{DATE}}">{{DATE}}</time>
+          <span>{{READ_TIME}} 分钟阅读</span>
+        </div>
+        <ul class="article-tags" aria-label="文章标签">{{TAGS_HTML}}</ul>
+      </header>
+
+      <div class="article-body" data-article-body tabindex="-1" {{PUBLIC_HIDDEN}}>
+        {{ARTICLE_BODY}}
+      </div>
+
+      <section class="article-protection" data-protection aria-labelledby="unlock-title" {{PRIVATE_HIDDEN}}>
+        <span class="article-protection-mark" aria-hidden="true">
+          <svg class="article-lock-icon"><use href="../../assets/icons.svg#lock"></use></svg>
+        </span>
+        <h2 id="unlock-title">这篇文章受密码保护</h2>
+        <p>输入文章密码后即可阅读正文。</p>
+        <form class="article-unlock-form" data-unlock-form method="post" autocomplete="off" hidden>
+          <label for="article-password">文章密码</label>
+          <div class="article-unlock-controls">
+            <input id="article-password" type="password" required aria-describedby="unlock-status">
+            <button type="submit">解锁文章</button>
+          </div>
+        </form>
+        <p class="article-unlock-status" id="unlock-status" role="status"></p>
+        <p class="article-demo-hint" {{DEMO_HIDDEN}}>演示密码为 <code>{{DEMO_PASSWORD}}</code>。</p>
+        <noscript><p>请启用 JavaScript 后解锁文章。</p></noscript>
+      </section>
+    </article>
+
+    <div class="article-return">
+      <a href="../../#articles">返回文章列表</a>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <a class="footer-brand" href="../../">Ringo<span>.</span> 的个人博客</a>
+      <span>技术 · 学习 · 学术 · 生活</span>
+    </div>
+  </footer>
+  <script id="article-data" type="application/json">{{ARTICLE_DATA}}</script>
+</body>
+</html>
