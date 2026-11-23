@@ -11,25 +11,25 @@ visibility: public
 
 ![CPU 与 GPU 异构计算以及 CUDA Grid、Block、Thread 的关系](../../assets/posts/gemm/cuda-heterogeneous-computing.webp)
 
-+ `Grid` : 整个 GPU 执行的一次任务被称为一个 Grid。
++ `Grid` : 整个 `GPU` 执行的一次任务被称为一个 `Grid`。
 
-+ `Block` : 一个 Grid 被划分为多个 Block。同一个 Block 会被分配到同一个 SM (流式多处理器) 上执行。
++ `Block` : 一个 `Grid` 被划分为多个 `Block`。同一个 `Block` 会被分配到同一个 `SM` (流式多处理器) 上执行。
 
-+ `Thread` : Block 内部又包含了多个 Thread。
++ `Thread` : `Block` 内部又包含了多个 `Thread`。
 
-+ `Global Memory` : 在最底下。它是 GPU上容量最大、但速度最慢的内存; 所有 Block 里的所有 Thread 都能访问它。CPU 拷过来的数据第一站就存在这里。
++ `Global Memory` : 在最底下。它是 `GPU`上容量最大、但速度最慢的内存; 所有 `Block` 里的所有 `Thread` 都能访问它。`CPU` 拷过来的数据第一站就存在这里。
 
-+ `Shared Memory` : 在 Block 内部。它是芯片上的缓存，容量很小，但速度极快（接近寄存器）。只有同一个 Block 内部的 Thread 才能访问这块内存。
++ `Shared Memory` : 在 `Block` 内部。它是芯片上的缓存，容量很小，但速度极快（接近寄存器）。只有同一个 `Block` 内部的 `Thread` 才能访问这块内存。
 
-2. GPU 内存层次结构
+2. `GPU` 内存层次结构
 
 ![GPU 内存层次图，展示各 SM 的寄存器、共享内存与全局内存](../../assets/posts/gemm/gpu-memory-hierarchy.webp)
 
 
 ***
-### cuda 矩阵乘法优化
+### `cuda` 矩阵乘法优化
 
-#### GEMMv1
+#### `GEMMv1`
 
 ```cuda
 #include <cuda.h>
@@ -163,17 +163,17 @@ int main() {
 ```
 + 坑点：
 
-    + 把 size 和 bytes 混合得用
+    + 把 `size` 和 `bytes` 混合得用
 
-    + \_\_global\_\_ 函数得返类型一定要写 void , 用之前一定要 `<<<grid,block>>>` 初始化
+    + `__global__` 函数得返类型一定要写 `void` , 用之前一定要 `<<<grid,block>>>` 初始化
 
-    + cudaMemcpy 有四个参数，最后一个是数据拷贝的方向
+    + `cudaMemcpy` 有四个参数，最后一个是数据拷贝的方向
 
     + `float*` 不是 `*float` , `void**` 同理
 
     + `+=` 用临时变量存，不然访存多次
 
-    + cudaMemcpy 默认是同步的（阻塞的），而核函数 <<<...>>> 默认是异步的，所以为了算 GPU 运行时间必须要加上 `cudaDeviceSynchronize()`
+    + `cudaMemcpy` 默认是同步的（阻塞的），而核函数 `<<<...>>>` 默认是异步的，所以为了算 `GPU` 运行时间必须要加上 `cudaDeviceSynchronize()`
 
 + 测试时间对比 
 
@@ -181,7 +181,7 @@ int main() {
 
 ***
 
-#### GEMMv2
+#### `GEMMv2`
 
 1. 思考
 
@@ -232,15 +232,15 @@ dC[row * N + col] = tmp;
 
 + 关注 `SA[3][6]` 和 `SB[6][3]` , 为什么是 `3`？为什么是 `6`?
 
-    + `3` : threadIdx.x 和 threadIdx.y, 就是块内偏移
+    + `3` : `threadIdx.x` 和 `threadIdx.y`, 就是块内偏移
 
-    + `6` : `k = 6` 的原因。（M,N,K 矩阵 , `a[M][K]` , `b[K][N]`）
+    + `6` : `k = 6` 的原因。（`M`,`N`,`K` 矩阵 , `a[M][K]` , `b[K][N]`）
 
-+ `id = threadIdx.y` 和 `id = threadIdx.x` (for 的开头) , 以及为什么步长为 `3`. （一定要有并行的想法）
++ `id = threadIdx.y` 和 `id = threadIdx.x` (`for` 的开头) , 以及为什么步长为 `3`. （一定要有并行的想法）
 
 ![三个线程按不同起点和相同步长协作搬运数据](../../assets/posts/gemm/gemmv2-thread-copy-steps.webp)
 
-+ \_\_shared\_\_ 变量定义在 \_\_global\_\_ 里面，毕竟每次都针对一个线程,有没有反复定义的嫌疑 ?
++ `__shared__` 变量定义在 `__global__` 里面，毕竟每次都针对一个线程,有没有反复定义的嫌疑 ?
 
 ```cuda
 #define BLOCK_SIZE 16
@@ -256,17 +256,17 @@ __global__ void matrixMul(float* A, float* B, float* C) {
 
 ![CUDA 为同一线程块的共享数组分配一次内存](../../assets/posts/gemm/gemmv2-shared-array-allocation.webp)
 
-+ 这里 `6` 很小，但是 K 是可以很大的，这里就有可能爆 Shared Memory。 `3` 是线程块单方向长度，所以不会很大。所以这是半成品.
++ 这里 `6` 很小，但是 `K` 是可以很大的，这里就有可能爆 `Shared Memory`。 `3` 是线程块单方向长度，所以不会很大。所以这是半成品.
 
 + 直观感受代价
 
 ![直接读全局内存与通过共享内存读数据的成本对比](../../assets/posts/gemm/gemmv2-memory-read-comparison.webp)
 
-+ 针对 k 过大的问题 , 采用 `分块矩阵乘法` 的思想
++ 针对 `k` 过大的问题 , 采用 `分块矩阵乘法` 的思想
 
 ![沿 K 维分段进行矩阵乘法，将每段数据载入共享内存](../../assets/posts/gemm/gemmv2-tiled-multiplication.webp)
 
-+ `__syncthreads();` ：强制同一个 Block 内的所有线程在这里集合。跑得快的线程必须停下来等，直到这个 Block 里的所有线程都到达了这个位置，大家才能一起往下执行。
++ `__syncthreads();` ：强制同一个 `Block` 内的所有线程在这里集合。跑得快的线程必须停下来等，直到这个 `Block` 里的所有线程都到达了这个位置，大家才能一起往下执行。
 
 + 代码实现
 
@@ -423,24 +423,24 @@ int main() {
 }
 ```
 
-+ 最本质的理解,threadIdx.x 和 threadIdx.y 确定后，就是要那一行和一列 , 长(广泛的 k ，这里的 m), 但太大了，只能分段取，再分段加
++ 最本质的理解,`threadIdx.x` 和 `threadIdx.y` 确定后，就是要那一行和一列 , 长(广泛的 `k` ，这里的 `m`), 但太大了，只能分段取，再分段加
 
 + 这个时候就要 `__syncthreads();` 控制同步
 
 ![GEMMv2 的 CPU 与 GPU 运行时间和正确性检验结果](../../assets/posts/gemm/gemmv2-benchmark.webp)
 
 ***
-#### GEMMv3
+#### `GEMMv3`
 
-+ 对于 v2 版本，`1` 个线程负责 C 矩阵的 `1` 个点。为了算这 `1` 个点，每次循环都要去 Shared Memory 里读 `2` 个数
++ 对于 `v2` 版本，`1` 个线程负责 `C` 矩阵的 `1` 个点。为了算这 `1` 个点，每次循环都要去 `Shared Memory` 里读 `2` 个数
 
-+ 对于 v3 版本，`1` 个线程负责 C 矩阵的一个 `TM * TN` 的小块
++ 对于 `v3` 版本，`1` 个线程负责 `C` 矩阵的一个 `TM * TN` 的小块
 
-+ 为什么快？中间计算结果，可以全部放在 register 里面 (线程和 register 一一对应的)
++ 为什么快？中间计算结果，可以全部放在 `register` 里面 (线程和 `register` 一一对应的)
 
 ![GEMMv3 中一个线程计算多个输出元素的布局](../../assets/posts/gemm/gemmv3-per-thread-accumulation.webp)
 
-+ v1 版本
++ `v1` 版本
 
     + 代码
 
@@ -472,7 +472,7 @@ int main() {
     ```
     + 思想: 就是一个线程对应一个 `TM * TN` 的方块
 
-    + 注意：线程和块不是一对一的关系，那 blockDim.x 和 blockDim.y 要对应变小
+    + 注意：线程和块不是一对一的关系，那 `blockDim.x` 和 `blockDim.y` 要对应变小
 
         ```cuda
         dim3 block(Block_Dim , Block_Dim); //16 * 16 = 256
@@ -484,7 +484,7 @@ int main() {
 
 + 观察
 
-    + `tmp[][] += ` 避免了全局写问题，之前要写入回去 ，但这里感觉用一个中间变量存储，在循环结束的时候再写入 C 是一样的
+    + `tmp[][] += ` 避免了全局写问题，之前要写入回去 ，但这里感觉用一个中间变量存储，在循环结束的时候再写入 `C` 是一样的
 
     + 看这段：
 
@@ -497,13 +497,13 @@ int main() {
         }
         ```
 
-        + 固定 i_offset ，遍历 `j_offset = 0~7` ，每次内层 k 循环都重新读了 `A[i*m+k]` —— 同一个 A 元素被读了 k 遍
+        + 固定 `i_offset` ，遍历 `j_offset = 0~7` ，每次内层 `k` 循环都重新读了 `A[i*m+k]` —— 同一个 `A` 元素被读了 `k` 遍
 
-        + threadIdx.y 不同的线程，处理的是同一行 A 的不同列 B，它们读的 A 完全一样。但 GPU 不知道，所以 A 被 `16` 个线程各读了一遍 → 总共重复读 `16×k` 倍
+        + `threadIdx.y` 不同的线程，处理的是同一行 `A` 的不同列 `B`，它们读的 `A` 完全一样。但 `GPU` 不知道，所以 `A` 被 `16` 个线程各读了一遍 → 总共重复读 `16×k` 倍
 
-        + 这就是 GEMMv2, 放入共享内存
+        + 这就是 `GEMMv2`, 放入共享内存
 
-+ v2 版本
++ `v2` 版本
 
 ```cuda
 __global__ void MatMul_Device_v2(float *A , float *B , float *C ,int n,int m,int q) {
@@ -567,11 +567,11 @@ __global__ void MatMul_Device_v2(float *A , float *B , float *C ,int n,int m,int
     }
 }
 ```
-+ 把 GEMMv2 和 GEMMv3-v1 结合起来了
++ 把 `GEMMv2` 和 `GEMMv3-v1` 结合起来了
 
 + 每一个线程管 `TM * TN` 块 + 分块叠加
 
-+ 思考 : DEMMv2 写的代码中分块长度设的是 BlockDim , 为什么这个设的就是 `BK=8` ? ，前者可以设置为 `8` 吗？
++ 思考 : `DEMMv2` 写的代码中分块长度设的是 `BlockDim` , 为什么这个设的就是 `BK=8` ? ，前者可以设置为 `8` 吗？
 
 ![早期线程协作搬运实现中，K 方向的分块步长和线程块宽度的关系](../../assets/posts/gemm/gemmv3-v1-tile-width.webp)
 
@@ -579,7 +579,7 @@ __global__ void MatMul_Device_v2(float *A , float *B , float *C ,int n,int m,int
 
 ![较大的 BK 对共享内存用量和占用率的影响](../../assets/posts/gemm/gemmv3-bk-memory-tradeoff.webp)
 
-+ 思考 : 那感觉GEMMv3 的搬运效率没有 GEMMv2 高了,拿 SA 举例, threadIdx.x 工作都有 threadIdx.y 并行协作，而 GEMMv3 写的是变量 K_offset
++ 思考 : 那感觉`GEMMv3` 的搬运效率没有 `GEMMv2` 高了,拿 `SA` 举例, `threadIdx.x` 工作都有 `threadIdx.y` 并行协作，而 `GEMMv3` 写的是变量 `K_offset`
 
 ```cuda
  //SA
@@ -608,12 +608,12 @@ for (int X_offset = 0 ; X_offset < TM ; ++X_offset) {
 
 ![早期实现中不同 CUDA 线程协作搬运不同矩阵元素的例子](../../assets/posts/gemm/gemmv3-collaborative-threads.webp)
 
-总结 : 冗余不是发生在一个线程内部，而是发生在多个线程执行同一段没有区分度的代码时。在写 CUDA 算子时，永远要问自己一个问题：“当不同的线程运行到这一行时，它们算出来的内存地址是一样的吗？” 如果是一样的，那就是在做无用功！
+总结 : 冗余不是发生在一个线程内部，而是发生在多个线程执行同一段没有区分度的代码时。在写 `CUDA` 算子时，永远要问自己一个问题：“当不同的线程运行到这一行时，它们算出来的内存地址是一样的吗？” 如果是一样的，那就是在做无用功！
 
-+ 所以引出 GEMMv4 版本 -- 重排索引
++ 所以引出 `GEMMv4` 版本 -- 重排索引
 
 ***
-#### GEMMv4
+#### `GEMMv4`
 
 + 代码
 
@@ -819,17 +819,17 @@ int main() {
 
 + 思考
 
-    + 跟 GEMMv3 的变化就是帮运 SA 和 SB 的时候动用整个 block 的线程 ( `128 * 8 = 32 * 32` 刚好一一对应)
+    + 跟 `GEMMv3` 的变化就是帮运 `SA` 和 `SB` 的时候动用整个 `block` 的线程 ( `128 * 8 = 32 * 32` 刚好一一对应)
 
     + 没时间了，其他细节写注释里面了
 ***
-#### GEMMv5
+#### `GEMMv5`
 
 ![GEMMv5 使用 float4 向量化访存和相应的矩阵分块](../../assets/posts/gemm/gemmv5-float4.webp)
 
-+ 使用 float4 ，一条汇编指令就能连续读取 `4` 个浮点数，极大提高了内存吞吐量，减少了访存指令数量。（`16` 字节）
++ 使用 `float4` ，一条汇编指令就能连续读取 `4` 个浮点数，极大提高了内存吞吐量，减少了访存指令数量。（`16` 字节）
 
-+ 当你使用 float4 去读取内存时，GPU 硬件有一个极其严苛的要求：被读取的内存起始地址，必须是 `16` 字节（`128` bit）的整数倍
++ 当你使用 `float4` 去读取内存时，`GPU` 硬件有一个极其严苛的要求：被读取的内存起始地址，必须是 `16` 字节（`128` `bit`）的整数倍
 
 + 代码
 
@@ -892,9 +892,9 @@ __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q)
 }
 ```
 ***
-#### GEMMv6
+#### `GEMMv6`
 
-+ 在 GEMMv5 中有这样一段代码
++ 在 `GEMMv5` 中有这样一段代码
 
 ```cuda
 tmp[r][c] += SA[(threadIdx.x * TM + r) * BK + k] * SB[k * BN + threadIdx.y * TN + c];
@@ -977,11 +977,11 @@ __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q)
 }
 ```
 ***
-#### GEMMv7
+#### `GEMMv7`
 
 ![GEMMv7 利用寄存器复用减少共享内存读操作](../../assets/posts/gemm/gemmv7-register-reuse.webp)
 
-+ 之前的注释也提过，在写入 tmp 的时候，把 k 移到外层，内部的 share Memery 的 SA 和 SB 可以写入寄存器
++ 之前的注释也提过，在写入 `tmp` 的时候，把 `k` 移到外层，内部的 `share Memery` 的 `SA` 和 `SB` 可以写入寄存器
 
 ```cuda
 __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q) {
@@ -1057,7 +1057,7 @@ __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q)
 }
 ```
 ***
-#### GEMMv8
+#### `GEMMv8`
 
 ![GEMMv8 通过双缓冲将全局内存搬运与矩阵计算重叠](../../assets/posts/gemm/gemmv8-pipeline.webp)
 

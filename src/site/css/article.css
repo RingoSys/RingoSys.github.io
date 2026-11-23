@@ -9,6 +9,17 @@
   unicode-range: U+0020-007E, U+00A0-00FF;
 }
 
+@font-face {
+  font-family: "Article Latin Serif";
+  src: local("Times New Roman Bold"),
+    local("TimesNewRomanPS-BoldMT"),
+    url("../assets/fonts/tinos-latin-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020-007E, U+00A0-00FF;
+}
+
 .article-page {
   min-height: 100vh;
   display: flex;
@@ -241,9 +252,9 @@
 }
 
 .article-body :not(pre) > code {
-  color: var(--accent);
+  color: #000;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .article-demo-hint code {
