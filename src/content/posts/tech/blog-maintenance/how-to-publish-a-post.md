@@ -2,18 +2,19 @@
 title: 如何发布博客文章
 description: 从创建 Markdown 到 GitHub Pages 上线，记录公开文章和密码保护文章的发布流程。
 date: 2026-11-23
-tags: [博客, Markdown, GitHub Pages]
 visibility: public
 ---
 
 ## 创建 Markdown 文件
 
-公开文章放在 `src/content/posts/` 下的大类目录里，也可以再加一层小类。可以在编辑器里新建文件，或打开 GitHub 的文章目录，点击 **Add file → Create new file**，输入包含目录的文件名。 [GitHub 上的文章目录](https://github.com/RingoSys/RingoSys.github.io/tree/main/src/content/posts)
+公开文章放在 `src/content/posts/` 下的大类目录里，可以继续建子目录。可以在编辑器里新建文件，或打开 GitHub 的文章目录，点击 **Add file → Create new file**，输入包含目录的文件名。 [GitHub 上的文章目录](https://github.com/RingoSys/RingoSys.github.io/tree/main/src/content/posts)
 
 - `tech/my-first-post.md` 归入「技术心得」。
-- `algorithm/graph-theory/shortest-path.md` 归入「算法竞赛 → graph-theory」。侧栏会自动生成小类，可以点击大类旁的按钮展开，点击小类名筛选。
+- `algorithm/graph-theory/shortest-path/dijkstra.md` 归入「算法竞赛 → graph-theory」，并从路径自动生成 `algorithm`、`graph-theory` 和 `shortest-path` 三个标签。文章详情会显示这些标签，首页搜索公开文章时也会匹配它们。
 
-目录名用英文。Markdown 文件名用小写英文字母、数字和连字符，并在整个博客内保持唯一。上面的 `shortest-path.md` 发布后的路径是 `/posts/shortest-path/`。
+侧栏根据前两级目录生成大类和小类。点击大类旁的按钮展开，点击小类名筛选。
+
+目录名用英文。Markdown 文件名用小写英文字母、数字和连字符，并在整个博客内保持唯一。上面的 `dijkstra.md` 发布后的路径是 `/posts/dijkstra/`。
 
 ## 写文章信息和正文
 
@@ -24,7 +25,6 @@ visibility: public
 title: 我的第一篇文章
 description: 用一句话概括文章内容。
 date: 2026-11-23
-tags: [笔记, Markdown]
 visibility: public
 ---
 
@@ -33,7 +33,7 @@ visibility: public
 在这里写正文。
 ```
 
-把 `date` 换成文章的发布日期。目录决定大类和小类，`tags` 可以继续用于搜索主题，例如 `tags: [图论, 最短路]`。直接放在 `src/content/posts/` 的文章用 `category` 指定大类。
+把 `date` 换成文章的发布日期。按目录组织时，分类和标签由路径自动生成。直接放在 `src/content/posts/` 的文章用 `category` 指定大类。
 
 代码块会尝试自动识别语言。也可以在代码块开头标注 `cpp`、`cuda`、`python` 或 `bash` 来指定高亮，输出和日志可标注 `text`。
 
@@ -61,6 +61,6 @@ git push origin main
 
 ## 发布密码保护文章
 
-在本地的 `content/private/` 写原稿，按大类和小类建目录，并把 `visibility` 设为 `private`。用 GPG 加密 Markdown 源文件，将加密后的 `.md.gpg` 放进 `src/content/protected/` 下对应的目录，再提交到仓库。
+在本地的 `content/private/` 写原稿，沿用公开文章的目录规则，并把 `visibility` 设为 `private`。用 GPG 加密 Markdown 源文件，将加密后的 `.md.gpg` 放进 `src/content/protected/` 下对应的目录，再提交到仓库。
 
 首次发布需要在 GitHub Actions Secrets 中设置源文件口令和访客阅读密码。文章标题、摘要、日期、分类和标签会公开显示，访客用阅读密码解锁正文。 [加密命令和 Secrets 设置](https://github.com/RingoSys/RingoSys.github.io#写密码保护文章)

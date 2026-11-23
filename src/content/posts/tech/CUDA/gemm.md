@@ -1,9 +1,7 @@
 ---
 title: CUDA的开发流程
 description: GPU 并行原理 & GEMM 优化实例
-category: tech
 date: 2026-11-23
-tags: [CUDA, 算子优化]
 visibility: public
 ---
 

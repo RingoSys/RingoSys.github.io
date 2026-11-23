@@ -94,12 +94,11 @@ async function readPosts(sourcePath, privateSource) {
     const parts = relative(directory, filePath).split(sep);
     const source = `${sourcePath}/${parts.join('/')}`;
     const folders = parts.slice(0, -1);
-    if (folders.length > 2) throw new Error(`${source} 的文章目录最多支持两级。`);
     const [folderCategory, subcategory] = folders;
     if (folderCategory && !Object.hasOwn(categoryLabels, folderCategory)) {
       throw new Error(`${source} 的分类目录应为以下值之一：${Object.keys(categoryLabels).join('、')}。`);
     }
-    if (subcategory && /[^A-Za-z0-9 _-]/.test(subcategory)) {
+    if (folders.slice(1).some((folder) => /[^A-Za-z0-9 _-]/.test(folder))) {
       throw new Error(`${source} 的子分类目录名只能包含英文字母、数字、空格、连字符和下划线。`);
     }
 
@@ -118,7 +117,7 @@ async function readPosts(sourcePath, privateSource) {
     }
 
     if (!isRecord(fields)) throw new Error(`${source} 的文章信息需为 YAML 映射。`);
-    const { title, description, date, tags, visibility, demo } = fields;
+    const { title, description, date, tags: legacyTags, visibility, demo } = fields;
     const category = folderCategory ?? fields.category;
     if (!nonemptyString(title) || !nonemptyString(description)) {
       throw new Error(`${source} 需要填写标题和摘要。`);
@@ -127,7 +126,7 @@ async function readPosts(sourcePath, privateSource) {
       throw new Error(`${source} 的类别应为以下值之一：${Object.keys(categoryLabels).join('、')}。`);
     }
     if (!isCalendarDate(date)) throw new Error(`${source} 的日期应为有效的 YYYY-MM-DD。`);
-    if (!Array.isArray(tags) || !tags.every(nonemptyString)) {
+    if (!folderCategory && legacyTags !== undefined && (!Array.isArray(legacyTags) || !legacyTags.every(nonemptyString))) {
       throw new Error(`${source} 的标签应为字符串列表。`);
     }
     if (!['public', 'private'].includes(visibility)) {
@@ -146,13 +145,16 @@ async function readPosts(sourcePath, privateSource) {
       throw new Error(`${source} 是公开文章，需要填写正文并关闭 demo。`);
     }
 
+    const tags = folderCategory
+      ? [...new Set(folders)]
+      : (legacyTags?.map((tag) => tag.trim()) ?? [category]);
     const metadata = {
       slug,
       title: title.trim(),
       description: description.trim(),
       category,
       date,
-      tags: tags.map((tag) => tag.trim()),
+      tags,
       visibility,
       url: `./posts/${slug}/`,
     };
