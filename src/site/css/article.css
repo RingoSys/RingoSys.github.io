@@ -102,6 +102,11 @@
   color: #8a452f;
 }
 
+.article-category[data-category="algorithm"] {
+  background: #e8f1ef;
+  color: #316366;
+}
+
 .article-category[data-category="research"] {
   background: #eeebf5;
   color: #594875;

@@ -45,6 +45,7 @@ readTime: 3
 | `category` | 首页分类 |
 | --- | --- |
 | `tech` | 技术心得 |
+| `algorithm` | 算法竞赛 |
 | `learning` | 学习笔记 |
 | `research` | 学术分享 |
 | `life` | 生活随笔 |

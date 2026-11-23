@@ -2,6 +2,7 @@ const categories = {
   all: "全部文章",
   tech: "技术心得",
   learning: "学习笔记",
+  algorithm: "算法竞赛",
   research: "学术分享",
   life: "生活随笔",
 };
@@ -174,7 +175,7 @@ function render() {
   grid.replaceChildren(...matches.slice(first, first + pageSize).map(buildCard));
   count.textContent = `共 ${matches.length} 篇文章`;
   message.hidden = matches.length > 0;
-  message.textContent = "没有找到符合条件的文章。";
+  message.textContent = state.query.trim() ? "没有找到符合条件的文章。" : "暂无文章。";
   renderPagination(page, pages);
 }
 

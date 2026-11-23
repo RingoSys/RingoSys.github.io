@@ -92,7 +92,6 @@ p, h1, h2, h3 { margin: 0; }
 }
 
 .brand-name { color: var(--forest); font: 700 1.625rem/1 Georgia, serif; letter-spacing: -.05em; }
-.brand-name > span, .footer-brand > span { color: var(--accent); }
 .site-nav { display: flex; align-items: center; gap: clamp(.5rem, 2.3vw, 2.125rem); }
 
 .site-nav a {
@@ -307,6 +306,7 @@ p, h1, h2, h3 { margin: 0; }
 
 .category-label::before { width: .35rem; height: .35rem; border-radius: 50%; background: currentColor; content: ""; }
 .category-learning { background: #ebedf5; color: #465681; }
+.category-algorithm { background: #e8f1ef; color: #316366; }
 .category-research { background: #efebf4; color: #65527d; }
 .category-life { background: #f5ebe3; color: #805036; }
 .card-date { color: var(--muted); font-size: .8125rem; font-variant-numeric: tabular-nums; }
@@ -379,19 +379,19 @@ p, h1, h2, h3 { margin: 0; }
   .profile-content p { margin-top: .18rem; }
   .category-card { padding: 0; border: 0; background: transparent; }
   .category-card h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .category-filters { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .3rem; }
+  .category-filters { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .3rem; }
   .category-filters button { justify-content: center; gap: .35rem; padding-inline: .15rem; border-color: var(--line); text-align: center; }
   .search-box { width: min(40vw, 15rem); }
+  html { scroll-padding-top: 7rem; }
+  .header-inner { grid-template-columns: 1fr auto; min-height: 0; padding-top: .75rem; }
+  .site-nav { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(6, minmax(max-content, 1fr)); gap: 0; }
+  .site-nav a { min-height: 2.75rem; padding-inline: .25rem; }
+  .site-nav a[aria-current="page"]::after { right: 18%; left: 18%; }
+  .github-link { min-height: 2.25rem; }
 }
 
 @media (max-width: 42rem) {
-  html { scroll-padding-top: 7rem; }
   .container { width: calc(100% - 2rem); }
-  .header-inner { grid-template-columns: 1fr auto; min-height: 0; padding-top: .75rem; }
-  .site-nav { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
-  .site-nav a { min-height: 2.75rem; }
-  .site-nav a[aria-current="page"]::after { right: 18%; left: 18%; }
-  .github-link { min-height: 2.25rem; }
   .main-content { padding-block: .9rem 3rem; }
 }
 
@@ -405,9 +405,8 @@ p, h1, h2, h3 { margin: 0; }
   .card-title { font-size: 1.125rem; }
 }
 
-@media (max-width: 22rem) {
-  .category-filters { display: flex; flex-wrap: wrap; }
-  .category-filters button { padding-inline: .55rem; }
+@media (max-width: 27rem) {
+  .category-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

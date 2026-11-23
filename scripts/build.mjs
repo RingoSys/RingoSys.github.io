@@ -16,6 +16,7 @@ const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const demoPassword = 'ringo-demo';
 const categoryLabels = {
   tech: '技术心得',
+  algorithm: '算法竞赛',
   learning: '学习笔记',
   research: '学术分享',
   life: '生活随笔',
@@ -89,7 +90,7 @@ async function readPosts(sourcePath, privateSource) {
       throw new Error(`${source} 需要填写标题和摘要。`);
     }
     if (typeof category !== 'string' || !Object.hasOwn(categoryLabels, category)) {
-      throw new Error(`${source} 的类别应为 tech、learning、research 或 life。`);
+      throw new Error(`${source} 的类别应为以下值之一：${Object.keys(categoryLabels).join('、')}。`);
     }
     if (!isCalendarDate(date)) throw new Error(`${source} 的日期应为有效的 YYYY-MM-DD。`);
     if (!Array.isArray(tags) || !tags.every(nonemptyString)) {
