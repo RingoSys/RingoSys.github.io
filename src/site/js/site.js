@@ -185,9 +185,14 @@ function render() {
 archiveTitle.tabIndex = -1;
 
 try {
-  const response = await fetch(new URL("../posts/index.json", import.meta.url));
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  posts = await response.json();
+  const index = document.querySelector("#post-index");
+  if (index) {
+    posts = JSON.parse(index.textContent);
+  } else {
+    const response = await fetch(new URL("../posts/index.json", import.meta.url), { cache: "no-cache" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    posts = await response.json();
+  }
   for (const button of filterButtons) {
     const category = button.dataset.category;
     const total = category === "all" ? posts.length : posts.filter((post) => post.category === category).length;

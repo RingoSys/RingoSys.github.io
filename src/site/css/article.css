@@ -224,7 +224,6 @@
   margin-block-end: 0;
 }
 
-.article-body pre,
 .article-body :not(pre) > code,
 .article-demo-hint code {
   border: 1px solid var(--line);
@@ -238,6 +237,43 @@
   margin: 1.25rem 0;
   padding: 0.9rem 1rem;
   overflow-x: auto;
+  border: 1px solid #33413d;
+  border-radius: 0.5rem;
+  background: #222a29;
+  color: #e5ece8;
+  color-scheme: dark;
+  font: 0.9rem/1.65 ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  overflow-wrap: normal;
+  tab-size: 4;
+}
+
+.article-body pre code {
+  font: inherit;
+  white-space: inherit;
+}
+
+.article-body pre :is(.hljs-keyword, .hljs-meta, .hljs-selector-tag) {
+  color: #9bc8fb;
+}
+
+.article-body pre :is(.hljs-type, .hljs-built_in, .hljs-attribute) {
+  color: #86ddc6;
+}
+
+.article-body pre :is(.hljs-string, .hljs-regexp, .hljs-addition) {
+  color: #f1b89f;
+}
+
+.article-body pre :is(.hljs-number, .hljs-literal, .hljs-symbol) {
+  color: #c1d995;
+}
+
+.article-body pre :is(.hljs-title, .hljs-section, .hljs-attr, .hljs-name) {
+  color: #f0d395;
+}
+
+.article-body pre :is(.hljs-comment, .hljs-quote) {
+  color: #a6b4ad;
 }
 
 .article-body :not(pre) > code,

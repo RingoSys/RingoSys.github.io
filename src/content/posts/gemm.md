@@ -9,7 +9,7 @@ visibility: public
 
 ### 异构结构
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260509105728648-767703722.png)
+![CPU 与 GPU 异构计算以及 CUDA Grid、Block、Thread 的关系](../../assets/posts/gemm/cuda-heterogeneous-computing.webp)
 
 + `Grid` : 整个 `GPU` 执行的一次任务被称为一个 `Grid`。
 
@@ -23,7 +23,7 @@ visibility: public
 
 2. `GPU` 内存层次结构
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260509111207465-1211475380.png)
+![GPU 内存层次图，展示各 SM 的寄存器、共享内存与全局内存](../../assets/posts/gemm/gpu-memory-hierarchy.webp)
 
 
 ***
@@ -31,7 +31,7 @@ visibility: public
 
 #### GEMMv1
 
-```
+```cuda
 #include <cuda.h>
 #include <stdio.h>
 #include <random>
@@ -177,7 +177,7 @@ int main() {
 
 + 测试时间对比 
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512012513125-1427920906.png)
+![GEMMv1 的 CPU 与 GPU 运行时间和正确性检验结果](../../assets/posts/gemm/gemmv1-benchmark.webp)
 
 ***
 
@@ -185,13 +185,13 @@ int main() {
 
 1. 思考
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512021815225-1599142690.png)
+![GEMMv2 中同一线程块的多个线程重复读取矩阵 B 的一列](../../assets/posts/gemm/gemmv2-repeated-global-reads.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512021854438-1406204960.png)
+![GEMMv2 将矩阵 A 和 B 的一部分载入共享内存](../../assets/posts/gemm/gemmv2-shared-memory.webp)
 
 + 半成品
 
-```
+```cuda
 // 假设 BLOCK_DIM_x = 3, BLOCK_DIM_y = 3, K = 6
 // 注意：这里的行列映射老师写的是 row=x, col=y (这会导致合并访存变差，通常我们写 row=y, col=x)
 
@@ -238,11 +238,11 @@ dC[row * N + col] = tmp;
 
 + `id = threadIdx.y` 和 `id = threadIdx.x` (`for` 的开头) , 以及为什么步长为 `3`. （一定要有并行的想法）
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512101753688-1092631464.png)
+![三个线程按不同起点和相同步长协作搬运数据](../../assets/posts/gemm/gemmv2-thread-copy-steps.webp)
 
 + `__shared__` 变量定义在 `__global__` 里面，毕竟每次都针对一个线程,有没有反复定义的嫌疑 ?
 
-```
+```cuda
 #define BLOCK_SIZE 16
 
 __global__ void matrixMul(float* A, float* B, float* C) {
@@ -254,23 +254,23 @@ __global__ void matrixMul(float* A, float* B, float* C) {
 }
 ```
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512104131245-1407600037.png)
+![CUDA 为同一线程块的共享数组分配一次内存](../../assets/posts/gemm/gemmv2-shared-array-allocation.webp)
 
 + 这里 `6` 很小，但是 `K` 是可以很大的，这里就有可能爆 `Shared Memory`。 `3` 是线程块单方向长度，所以不会很大。所以这是半成品.
 
 + 直观感受代价
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512104843383-1170818926.png)
+![直接读全局内存与通过共享内存读数据的成本对比](../../assets/posts/gemm/gemmv2-memory-read-comparison.webp)
 
 + 针对 `k` 过大的问题 , 采用 `分块矩阵乘法` 的思想
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512110744605-70607670.png)
+![沿 K 维分段进行矩阵乘法，将每段数据载入共享内存](../../assets/posts/gemm/gemmv2-tiled-multiplication.webp)
 
 + `__syncthreads();` ：强制同一个 `Block` 内的所有线程在这里集合。跑得快的线程必须停下来等，直到这个 `Block` 里的所有线程都到达了这个位置，大家才能一起往下执行。
 
 + 代码实现
 
-```
+```cuda
 #include <cuda.h>
 #include <stdio.h>
 #include <random>
@@ -427,7 +427,7 @@ int main() {
 
 + 这个时候就要 `__syncthreads();` 控制同步
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512163056045-1430535660.png)
+![GEMMv2 的 CPU 与 GPU 运行时间和正确性检验结果](../../assets/posts/gemm/gemmv2-benchmark.webp)
 
 ***
 #### GEMMv3
@@ -438,13 +438,13 @@ int main() {
 
 + 为什么快？中间计算结果，可以全部放在 `register` 里面 (线程和 `register` 一一对应的)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260512230826528-2113352693.png)
+![GEMMv3 中一个线程计算多个输出元素的布局](../../assets/posts/gemm/gemmv3-per-thread-accumulation.webp)
 
 + `v1` 版本
 
     + 代码
 
-    ```
+    ```cuda
     __global__ void MatMul_Device_v1(float *A, float *B , float *C , int n,int m,int q) {
         int i_begin = TM * (threadIdx.x + blockDim.x * blockIdx.x);
         int j_begin = TN * (threadIdx.y + blockDim.y * blockIdx.y);
@@ -474,7 +474,7 @@ int main() {
 
     + 注意：线程和块不是一对一的关系，那 `blockDim.x` 和 `blockDim.y` 要对应变小
 
-        ```
+        ```cuda
         dim3 block(Block_Dim , Block_Dim); //16 * 16 = 256
         //注意一对多，grid大小肯定要修改
         int block_cover_x = TM * block.x;
@@ -488,7 +488,7 @@ int main() {
 
     + 看这段：
 
-        ```
+        ```cuda
         for (int j_offset = 0; j_offset < TN; ++j_offset) {
             for (int k = 0; k < m; ++k) {
                 tmp[i_offset][j_offset] += A[i * m + k] * B[k * q + j];
@@ -505,7 +505,7 @@ int main() {
 
 + `v2` 版本
 
-```
+```cuda
 __global__ void MatMul_Device_v2(float *A , float *B , float *C ,int n,int m,int q) {
     __shared__ float SA[BM][BK]; //BM 维度给每一线程x开了 TM 空间
     __shared__ float SB[BK][BN];
@@ -573,15 +573,15 @@ __global__ void MatMul_Device_v2(float *A , float *B , float *C ,int n,int m,int
 
 + 思考 : `DEMMv2` 写的代码中分块长度设的是 `BlockDim` , 为什么这个设的就是 `BK=8` ? ，前者可以设置为 `8` 吗？
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513123923747-1690735882.png)
+![早期线程协作搬运实现中，K 方向的分块步长和线程块宽度的关系](../../assets/posts/gemm/gemmv3-v1-tile-width.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513124143047-1256954708.png)
+![利用每线程多元素分块独立选取 BK 的说明](../../assets/posts/gemm/gemmv3-independent-bk.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513124143786-2075380480.png)
+![较大的 BK 对共享内存用量和占用率的影响](../../assets/posts/gemm/gemmv3-bk-memory-tradeoff.webp)
 
 + 思考 : 那感觉`GEMMv3` 的搬运效率没有 `GEMMv2` 高了,拿 `SA` 举例, `threadIdx.x` 工作都有 `threadIdx.y` 并行协作，而 `GEMMv3` 写的是变量 `K_offset`
 
-```
+```cuda
  //SA
 if (col < n && i * Block_Dim + threadIdx.y < m) {
     SA[threadIdx.x][threadIdx.y] = A[col * m + threadIdx.y + i * Block_Dim];
@@ -602,11 +602,11 @@ for (int X_offset = 0 ; X_offset < TM ; ++X_offset) {
     }
 }
 ```
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513124920747-1741526969.png)
+![矩阵 A 的共享内存搬运代码和重复读写分析](../../assets/posts/gemm/gemmv3-sa-copy-loop.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513125243076-905014638.png)
+![两个不同 CUDA 线程对同一共享内存位置执行重复搬运的例子](../../assets/posts/gemm/gemmv3-redundant-threads.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513125243733-1648265946.png)
+![早期实现中不同 CUDA 线程协作搬运不同矩阵元素的例子](../../assets/posts/gemm/gemmv3-collaborative-threads.webp)
 
 总结 : 冗余不是发生在一个线程内部，而是发生在多个线程执行同一段没有区分度的代码时。在写 `CUDA` 算子时，永远要问自己一个问题：“当不同的线程运行到这一行时，它们算出来的内存地址是一样的吗？” 如果是一样的，那就是在做无用功！
 
@@ -617,7 +617,7 @@ for (int X_offset = 0 ; X_offset < TM ; ++X_offset) {
 
 + 代码
 
-```
+```cuda
 #include <cuda.h>
 #include <stdio.h>
 #include <random>
@@ -815,7 +815,7 @@ int main() {
 }
 ```
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513191013825-716137252.png)
+![GEMMv4 优化全局内存到共享内存的搬运方式并对比运行时间](../../assets/posts/gemm/gemmv4-optimized-copy.webp)
 
 + 思考
 
@@ -825,7 +825,7 @@ int main() {
 ***
 #### GEMMv5
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513191250572-1481306746.png)
+![GEMMv5 使用 float4 向量化访存和相应的矩阵分块](../../assets/posts/gemm/gemmv5-float4.webp)
 
 + 使用 `float4` ，一条汇编指令就能连续读取 `4` 个浮点数，极大提高了内存吞吐量，减少了访存指令数量。（`16` 字节）
 
@@ -833,7 +833,7 @@ int main() {
 
 + 代码
 
-```
+```cuda
 __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q) {
     
     __shared__ float SA[BM * BK]; //float4读取必须行优先,在GPU中行坐标地址连续
@@ -896,22 +896,22 @@ __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q)
 
 + 在 `GEMMv5` 中有这样一段代码
 
-```
+```cuda
 tmp[r][c] += SA[(threadIdx.x * TM + r) * BK + k] * SB[k * BN + threadIdx.y * TN + c];
 ```
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513230738610-1573984937.png)
+![代入 TM 和 BK 推导矩阵 A 在共享内存里的索引](../../assets/posts/gemm/gemmv6-sa-index.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260513230814810-1595686566.png)
+![用索引对 32 取余计算共享内存 Bank 编号](../../assets/posts/gemm/gemmv6-bank-index.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260514000552444-2136159409.png)
+![多个线程访问不同地址却映射到同一个共享内存 Bank 的示例](../../assets/posts/gemm/gemmv6-bank-conflict.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260514000713357-2109421507.png)
+![矩阵 B 利用同一地址广播避免共享内存 Bank 冲突的示例](../../assets/posts/gemm/gemmv6-sb-broadcast.webp)
 
 + 总结思路：把 `SA[128][8]` 转置为 `SA[8][128]`
 
 + 代码
 
-```
+```cuda
 __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q) {
     
     __shared__ float SA[BM * BK]; //float4读取必须行优先,在GPU中行坐标地址连续
@@ -979,11 +979,11 @@ __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q)
 ***
 #### GEMMv7
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260514004450806-1288038343.png)
+![GEMMv7 利用寄存器复用减少共享内存读操作](../../assets/posts/gemm/gemmv7-register-reuse.webp)
 
 + 之前的注释也提过，在写入 `tmp` 的时候，把 `k` 移到外层，内部的 `share Memery` 的 `SA` 和 `SB` 可以写入寄存器
 
-```
+```cuda
 __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q) {
     
     __shared__ float SA[BM * BK]; //float4读取必须行优先,在GPU中行坐标地址连续
@@ -1059,21 +1059,21 @@ __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q)
 ***
 #### GEMMv8
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260514012307254-1675810104.png)
+![GEMMv8 通过双缓冲将全局内存搬运与矩阵计算重叠](../../assets/posts/gemm/gemmv8-pipeline.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260514013212689-1255895033.png)
+![GEMMv7 里数据搬运、同步和计算串行执行的问题](../../assets/posts/gemm/gemmv8-serialized-stages.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260514013259906-555408415.png)
+![两个共享内存缓冲区交替承担数据搬运和计算](../../assets/posts/gemm/gemmv8-double-buffer.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260514013330785-1872421113.png)
+![双缓冲实现所需的共享内存数组声明和循环结构](../../assets/posts/gemm/gemmv8-buffer-layout.webp)
 
-![alt text](https://img2024.cnblogs.com/blog/2509625/202605/2509625-20260514013452147-1948957888.png)
+![双缓冲流水线仍需线程块同步的原因](../../assets/posts/gemm/gemmv8-thread-synchronization.webp)
 
 + 滚动数组思想
 
 + 代码
 
-```
+```cuda
 __global__ void MatMul_Device(float *A , float *B , float *C ,int n,int m,int q) {
     
     __shared__ float SA[BM * BK * 2]; //要并行流水，shared Memery 开 2 倍

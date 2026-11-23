@@ -12,6 +12,7 @@
     "preview": "node scripts/build.mjs --preview"
   },
   "dependencies": {
+    "highlight.js": "^11.12.0",
     "markdown-it": "^15.0.3",
     "yaml": "^2.9.1"
   }

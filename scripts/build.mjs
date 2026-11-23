@@ -1,4 +1,4 @@
-import { createCipheriv, pbkdf2, randomBytes } from 'node:crypto';
+import { createCipheriv, createHash, pbkdf2, randomBytes } from 'node:crypto';
 import { cp, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
@@ -6,11 +6,26 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import MarkdownIt from 'markdown-it';
 import { parse as parseYaml } from 'yaml';
+import { highlightCode } from './highlight.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const site = resolve(root, 'src/site');
 const distribution = resolve(root, 'dist');
-const markdown = new MarkdownIt({ html: false, linkify: true });
+const homeTemplate = resolve(site, 'index.html');
+const articleTemplate = resolve(site, 'article.html');
+const markdown = new MarkdownIt({ html: false, linkify: true, highlight: highlightCode });
+const renderImage = markdown.renderer.rules.image;
+markdown.renderer.rules.image = (tokens, index, options, env, renderer) => {
+  tokens[index].attrSet('loading', 'lazy');
+  tokens[index].attrSet('decoding', 'async');
+  return renderImage(tokens, index, options, env, renderer);
+};
+const versionedAssets = {
+  SITE_CSS_VERSION: 'css/style.css',
+  ARTICLE_CSS_VERSION: 'css/article.css',
+  SITE_JS_VERSION: 'js/site.js',
+  ARTICLE_JS_VERSION: 'js/article.js',
+};
 const deriveKey = promisify(pbkdf2);
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const demoPassword = 'ringo-demo';
@@ -164,7 +179,27 @@ function escapeHtml(value) {
   return markdown.utils.escapeHtml(value).replaceAll("'", '&#39;');
 }
 
-async function renderPost(template, post, passwords) {
+function scriptJson(value) {
+  return JSON.stringify(value).replaceAll('<', '\\u003c');
+}
+
+function renderTemplate(template, values) {
+  return template.replace(/\{\{([A-Z_]+)\}\}/g, (_, token) => {
+    if (!Object.hasOwn(values, token)) throw new Error(`页面模板使用了未知字段 ${token}。`);
+    return values[token];
+  });
+}
+
+async function assetVersions() {
+  const versions = await Promise.all(Object.entries(versionedAssets).map(async ([token, path]) => {
+    const contents = await readFile(resolve(site, path));
+    const digest = createHash('sha256').update(contents).digest('hex').slice(0, 12);
+    return [token, digest];
+  }));
+  return Object.fromEntries(versions);
+}
+
+async function renderPost(template, post, passwords, versions) {
   const { metadata, body } = post;
   const { slug, title, description, category, date, tags, visibility, demo } = metadata;
   const data = { ...metadata };
@@ -178,7 +213,8 @@ async function renderPost(template, post, passwords) {
     data.encrypted = await encryptArticle(html, password);
   }
 
-  const values = {
+  return renderTemplate(template, {
+    ...versions,
     TITLE: escapeHtml(title),
     DESCRIPTION: escapeHtml(description),
     CATEGORY: category,
@@ -189,20 +225,18 @@ async function renderPost(template, post, passwords) {
     PRIVATE_HIDDEN: isPrivate ? '' : 'hidden',
     DEMO_HIDDEN: demo ? '' : 'hidden',
     DEMO_PASSWORD: demo ? demoPassword : '',
-    ARTICLE_DATA: JSON.stringify(data).replaceAll('<', '\\u003c'),
+    ARTICLE_DATA: scriptJson(data),
     ARTICLE_BODY: isPrivate ? '' : html,
-  };
-  return template.replace(/\{\{([A-Z_]+)\}\}/g, (_, token) => {
-    if (!Object.hasOwn(values, token)) throw new Error(`文章模板使用了未知字段 ${token}。`);
-    return values[token];
   });
 }
 
 async function build() {
-  const [template, publicPosts, privatePosts] = await Promise.all([
-    readFile(resolve(site, 'article.html'), 'utf8'),
+  const [home, article, publicPosts, privatePosts, versions] = await Promise.all([
+    readFile(homeTemplate, 'utf8'),
+    readFile(articleTemplate, 'utf8'),
     readPosts('src/content/posts', false),
     readPosts('content/private', true),
+    assetVersions(),
   ]);
   const posts = [...publicPosts, ...privatePosts];
   const uniqueSlugs = new Set();
@@ -215,21 +249,23 @@ async function build() {
   ));
 
   const passwords = readPasswords();
+  const postIndex = posts.map(({ metadata }) => metadata);
   const staging = await mkdtemp(resolve(root, '.dist-'));
   try {
     await cp(site, staging, {
       recursive: true,
       filter: async (source) => (
-        source !== resolve(site, 'article.html') && extname(source) !== '.md' && !(await lstat(source)).isSymbolicLink()
+        source !== homeTemplate && source !== articleTemplate && extname(source) !== '.md'
+        && !(await lstat(source)).isSymbolicLink()
       ),
     });
-    await stat(resolve(staging, 'index.html'));
+    await writeFile(resolve(staging, 'index.html'), renderTemplate(home, { ...versions, POST_INDEX: scriptJson(postIndex) }));
     const postsDirectory = resolve(staging, 'posts');
     await mkdir(postsDirectory, { recursive: true });
-    await writeFile(resolve(postsDirectory, 'index.json'), `${JSON.stringify(posts.map(({ metadata }) => metadata), null, 2)}\n`);
+    await writeFile(resolve(postsDirectory, 'index.json'), `${JSON.stringify(postIndex, null, 2)}\n`);
     await writeFile(resolve(staging, '.nojekyll'), '');
     for (const post of posts) {
-      const html = await renderPost(template, post, passwords);
+      const html = await renderPost(article, post, passwords, versions);
       const directory = resolve(postsDirectory, post.metadata.slug);
       await mkdir(directory, { recursive: true });
       await writeFile(resolve(directory, 'index.html'), html);
