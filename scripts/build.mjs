@@ -14,6 +14,11 @@ const distribution = resolve(root, 'dist');
 const homeTemplate = resolve(site, 'index.html');
 const articleTemplate = resolve(site, 'article.html');
 const markdown = new MarkdownIt({ html: false, linkify: true, highlight: highlightCode });
+markdown.renderer.rules.code_block = (tokens, index, _options, _env, renderer) => {
+  const token = tokens[index];
+  const content = highlightCode(token.content) || markdown.utils.escapeHtml(token.content);
+  return `<pre${renderer.renderAttrs(token)}><code>${content}</code></pre>\n`;
+};
 const renderImage = markdown.renderer.rules.image;
 markdown.renderer.rules.image = (tokens, index, options, env, renderer) => {
   tokens[index].attrSet('loading', 'lazy');

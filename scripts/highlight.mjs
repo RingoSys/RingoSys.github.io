@@ -11,14 +11,20 @@ import xml from "highlight.js/lib/languages/xml";
 import yaml from "highlight.js/lib/languages/yaml";
 
 const languages = { bash, c, cpp, javascript, json, markdown, python, sql, xml, yaml };
+const autoLanguages = Object.keys(languages).filter(name => name !== "markdown");
 for (const [name, grammar] of Object.entries(languages)) {
   hljs.registerLanguage(name, grammar);
 }
 hljs.registerAliases(["cuda", "cu"], { languageName: "cpp" });
 
-export function highlightCode(source, language) {
-  if (!language || !hljs.getLanguage(language)) {
-    return "";
+export function highlightCode(source, language = "") {
+  if (language) {
+    return hljs.getLanguage(language)
+      ? hljs.highlight(source, { language, ignoreIllegals: true }).value
+      : "";
   }
-  return hljs.highlight(source, { language, ignoreIllegals: true }).value;
+
+  // Small relevance scores often come from terminal output or prose.
+  const detected = hljs.highlightAuto(source, autoLanguages);
+  return detected.relevance >= 3 ? detected.value : "";
 }
