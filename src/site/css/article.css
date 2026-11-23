@@ -69,8 +69,7 @@
   border-block-end: 1px solid var(--line);
 }
 
-.article-labels,
-.article-meta {
+.article-labels {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -143,7 +142,9 @@
   line-height: 1.8;
 }
 
-.article-meta time {
+.article-date {
+  color: var(--muted);
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
 

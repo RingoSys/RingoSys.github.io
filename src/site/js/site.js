@@ -101,13 +101,16 @@ function buildCard(post) {
   const description = node("p", "card-description", locked ? "这篇文章已加密，输入密码后可阅读。" : post.description);
 
   const footer = node("div", "card-footer");
-  const status = node("span", locked ? "card-status card-status-private" : "card-status");
-  status.append(icon(locked ? "lock" : "clock"), locked ? "密码保护" : `${post.readTime} 分钟阅读`);
+  if (locked) {
+    const status = node("span", "card-status");
+    status.append(icon("lock"), "密码保护");
+    footer.append(status);
+  }
 
   const action = node("a", "card-action", locked ? "解锁文章" : "阅读全文");
   action.href = post.url;
   action.setAttribute("aria-label", `${action.textContent} · ${post.title}`);
-  footer.append(status, action);
+  footer.append(action);
 
   card.append(meta, title, description, footer);
   return card;

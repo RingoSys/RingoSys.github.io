@@ -5,7 +5,6 @@ category: tech
 date: 2026-11-23
 tags: [博客, Markdown, GitHub Pages]
 visibility: public
-readTime: 3
 ---
 
 ## 创建 Markdown 文件
@@ -26,7 +25,6 @@ category: tech
 date: 2026-11-23
 tags: [笔记, Markdown]
 visibility: public
-readTime: 3
 ---
 
 ## 这篇文章的第一节
@@ -34,7 +32,7 @@ readTime: 3
 在这里写正文。
 ```
 
-把 `date` 换成文章的发布日期，`readTime` 填预计阅读的分钟数。每篇文章选一个大类，可以用多个标签细分主题。比如算法竞赛的图论文章可以填 `category: algorithm` 和 `tags: [图论, 最短路]`。
+把 `date` 换成文章的发布日期。每篇文章选一个大类，可以用多个标签细分主题。比如算法竞赛的图论文章可以填 `category: algorithm` 和 `tags: [图论, 最短路]`。
 
 | 分类值 | 博客上显示的名称 |
 | --- | --- |

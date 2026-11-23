@@ -85,7 +85,7 @@ async function readPosts(sourcePath, privateSource) {
     }
 
     if (!isRecord(fields)) throw new Error(`${source} 的文章信息需为 YAML 映射。`);
-    const { title, description, category, date, tags, visibility, readTime, demo } = fields;
+    const { title, description, category, date, tags, visibility, demo } = fields;
     if (!nonemptyString(title) || !nonemptyString(description)) {
       throw new Error(`${source} 需要填写标题和摘要。`);
     }
@@ -95,9 +95,6 @@ async function readPosts(sourcePath, privateSource) {
     if (!isCalendarDate(date)) throw new Error(`${source} 的日期应为有效的 YYYY-MM-DD。`);
     if (!Array.isArray(tags) || !tags.every(nonemptyString)) {
       throw new Error(`${source} 的标签应为字符串列表。`);
-    }
-    if (!Number.isSafeInteger(readTime) || readTime <= 0) {
-      throw new Error(`${source} 的阅读时长应为正整数。`);
     }
     if (!['public', 'private'].includes(visibility)) {
       throw new Error(`${source} 的可见性应为 public 或 private。`);
@@ -123,7 +120,6 @@ async function readPosts(sourcePath, privateSource) {
       date,
       tags: tags.map((tag) => tag.trim()),
       visibility,
-      readTime,
       url: `./posts/${slug}/`,
     };
     if (demo) metadata.demo = true;
@@ -170,7 +166,7 @@ function escapeHtml(value) {
 
 async function renderPost(template, post, passwords) {
   const { metadata, body } = post;
-  const { slug, title, description, category, date, tags, visibility, readTime, demo } = metadata;
+  const { slug, title, description, category, date, tags, visibility, demo } = metadata;
   const data = { ...metadata };
   const isPrivate = visibility === 'private';
   const html = markdown.render(demo ? demoMarkdown : body);
@@ -188,7 +184,6 @@ async function renderPost(template, post, passwords) {
     CATEGORY: category,
     CATEGORY_LABEL: categoryLabels[category],
     DATE: date,
-    READ_TIME: readTime,
     TAGS_HTML: tags.map((tag) => `<li># ${escapeHtml(tag)}</li>`).join(''),
     PUBLIC_HIDDEN: isPrivate ? 'hidden' : '',
     PRIVATE_HIDDEN: isPrivate ? '' : 'hidden',

@@ -36,7 +36,6 @@ category: tech
 date: 2026-11-23
 tags: [笔记, Markdown]
 visibility: public
-readTime: 3
 ---
 
 在这里写 Markdown 正文。
