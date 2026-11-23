@@ -1,6 +1,6 @@
 ---
-title: CUDA Development Workflow
-description: GPU parallelism and a worked example of GEMM optimization.
+title: CUDA的开发流程
+description: GPU 并行原理 & GEMM 优化实例
 date: 2026-11-23
 visibility: public
 ---
